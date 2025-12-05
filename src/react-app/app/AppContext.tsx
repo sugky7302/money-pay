@@ -104,7 +104,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addTransaction = (transaction: Transaction) => {
     setTransactions([transaction, ...transactions]);
     
-    // Update account balances for transfers
+    // Update account balances
     if (transaction.type === 'transfer' && transaction.fromAccount && transaction.toAccount) {
       setAccounts(prevAccounts => 
         prevAccounts.map(acc => {
@@ -113,6 +113,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           }
           if (acc.name === transaction.toAccount) {
             return { ...acc, balance: acc.balance + transaction.amount };
+          }
+          return acc;
+        })
+      );
+    } else if (transaction.account) {
+      // Update account balance for regular income/expense transactions
+      setAccounts(prevAccounts => 
+        prevAccounts.map(acc => {
+          if (acc.name === transaction.account) {
+            const balanceChange = transaction.type === 'income' 
+              ? transaction.amount 
+              : -transaction.amount;
+            return { ...acc, balance: acc.balance + balanceChange };
           }
           return acc;
         })

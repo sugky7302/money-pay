@@ -21,5 +21,6 @@ export const formatTime = (date: Date): string => {
 };
 
 export const generateId = (): number => {
-  return Date.now();
+  // Combine timestamp with a random number to reduce collision risk
+  return Date.now() + Math.floor(Math.random() * 1000);
 };
