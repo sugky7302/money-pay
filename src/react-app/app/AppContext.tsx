@@ -1,13 +1,16 @@
 // App context for state management
 
-import React, { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { googleSheetsService, storage } from '../shared/lib';
-import { Account, Category, Merchant, Tag, Transaction } from '../shared/types';
-
-// Auto-sync debounce delay (30 seconds to avoid rate limiting)
-const AUTO_SYNC_DELAY = 30000;
-// Minimum interval between syncs (60 seconds)
-const MIN_SYNC_INTERVAL = 60000;
+import React, {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { googleSheetsService, storage, useConfig } from "../shared/lib";
+import { Account, Category, Merchant, Tag, Transaction } from "../shared/types";
 
 interface AppContextType {
   // State
@@ -20,25 +23,25 @@ interface AppContextType {
   isLoading: boolean;
   isSyncing: boolean;
   autoSyncEnabled: boolean;
-  
+
   // Actions
   addTransaction: (transaction: Transaction) => void;
   updateTransaction: (id: number, transaction: Partial<Transaction>) => void;
   deleteTransaction: (id: number) => void;
-  
+
   addAccount: (account: Account) => void;
   updateAccount: (id: number, account: Partial<Account>) => void;
   deleteAccount: (id: number) => void;
-  
+
   addCategory: (category: Category) => void;
   deleteCategory: (id: number) => void;
-  
+
   addTag: (tag: Tag) => void;
   deleteTag: (id: number) => void;
-  
+
   addMerchant: (merchant: Merchant) => void;
   deleteMerchant: (id: number) => void;
-  
+
   syncToCloud: () => Promise<void>;
   loadFromCloud: () => Promise<void>;
   downloadBackup: () => void;
@@ -48,17 +51,24 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AppProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
   const [merchants, setMerchants] = useState<Merchant[]>([]);
-  const [lastSyncTime, setLastSyncTime] = useState('尚未備份');
+  const [lastSyncTime, setLastSyncTime] = useState("尚未備份");
   const [isLoading, setIsLoading] = useState(true);
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
-  
+  const { config } = useConfig();
+
+  // Auto-sync debounce delay (30 seconds to avoid rate limiting)
+  const AUTO_SYNC_DELAY = config?.autoSyncDelay ?? 30000;
+  // Minimum interval between syncs (60 seconds)
+  const MIN_SYNC_INTERVAL = config?.minSyncInterval ?? 60000;
   // Ref for debounce timer
   const syncTimerRef = useRef<NodeJS.Timeout | null>(null);
   // Ref to track if initial load is complete
@@ -66,7 +76,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Ref to track last sync time for rate limiting
   const lastSyncTimeRef = useRef<number>(0);
   // Ref to store current data for sync
-  const dataRef = useRef({ transactions: [] as Transaction[], accounts: [] as Account[], categories: [] as Category[], tags: [] as Tag[], merchants: [] as Merchant[] });
+  const dataRef = useRef({
+    transactions: [] as Transaction[],
+    accounts: [] as Account[],
+    categories: [] as Category[],
+    tags: [] as Tag[],
+    merchants: [] as Merchant[],
+  });
 
   // Update data ref when state changes
   useEffect(() => {
@@ -80,7 +96,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Check minimum interval
     const now = Date.now();
     if (now - lastSyncTimeRef.current < MIN_SYNC_INTERVAL) {
-      console.log('Skipping sync - too soon since last sync');
+      console.log("Skipping sync - too soon since last sync");
       // Schedule another sync after the minimum interval
       if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
       syncTimerRef.current = setTimeout(() => {
@@ -88,28 +104,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }, MIN_SYNC_INTERVAL - (now - lastSyncTimeRef.current));
       return;
     }
-    
+
     setIsSyncing(true);
-    
+
     try {
       const backupData = {
         ...dataRef.current,
         exportDate: new Date().toISOString(),
       };
-      
+
       await googleSheetsService.saveToGoogleSheets(backupData);
-      
+
       lastSyncTimeRef.current = Date.now();
-      
+
       // Update last sync time
       const nowDate = new Date();
-      const timeStr = `${nowDate.getFullYear()}/${(nowDate.getMonth()+1).toString().padStart(2, '0')}/${nowDate.getDate().toString().padStart(2, '0')} ${nowDate.getHours().toString().padStart(2, '0')}:${nowDate.getMinutes().toString().padStart(2, '0')}`;
+      const timeStr = `${nowDate.getFullYear()}/${(nowDate.getMonth() + 1)
+        .toString()
+        .padStart(2, "0")}/${nowDate
+        .getDate()
+        .toString()
+        .padStart(2, "0")} ${nowDate
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:${nowDate.getMinutes().toString().padStart(2, "0")}`;
       setLastSyncTime(timeStr);
       storage.setLastSync(timeStr);
-      
-      console.log('Auto-sync completed:', timeStr);
+
+      console.log("Auto-sync completed:", timeStr);
     } catch (error) {
-      console.error('Auto-sync failed:', error);
+      console.error("Auto-sync failed:", error);
     } finally {
       setIsSyncing(false);
     }
@@ -118,18 +142,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Trigger auto-sync with debounce
   const scheduleAutoSync = useCallback(() => {
     if (!autoSyncEnabled || !initialLoadComplete.current) return;
-    
+
     // Clear existing timer
     if (syncTimerRef.current) {
       clearTimeout(syncTimerRef.current);
     }
-    
+
     // Schedule sync after delay
     syncTimerRef.current = setTimeout(() => {
       performAutoSync();
     }, AUTO_SYNC_DELAY);
   }, [autoSyncEnabled, performAutoSync]);
-  
+
   // Initialize data from localStorage
   useEffect(() => {
     const loadInitialData = () => {
@@ -140,7 +164,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const savedMerchants = storage.getMerchants();
       const savedSyncTime = storage.getLastSync();
       const savedAutoSync = storage.getAutoSyncEnabled();
-      
+
       setTransactions(savedTransactions);
       setAccounts(savedAccounts);
       setCategories(savedCategories);
@@ -149,15 +173,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setLastSyncTime(savedSyncTime);
       setAutoSyncEnabled(savedAutoSync);
       setIsLoading(false);
-      
+
       // Mark initial load as complete after a short delay
       setTimeout(() => {
         initialLoadComplete.current = true;
       }, 1000);
     };
-    
+
     loadInitialData();
-    
+
     // Cleanup timer on unmount
     return () => {
       if (syncTimerRef.current) {
@@ -165,48 +189,48 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     };
   }, []);
-  
+
   // Save to localStorage when data changes and trigger auto-sync
   useEffect(() => {
     if (!isLoading) {
       storage.setTransactions(transactions);
       scheduleAutoSync();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transactions, isLoading]);
-  
+
   useEffect(() => {
     if (!isLoading) {
       storage.setAccounts(accounts);
       scheduleAutoSync();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accounts, isLoading]);
-  
+
   useEffect(() => {
     if (!isLoading) {
       storage.setCategories(categories);
       scheduleAutoSync();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categories, isLoading]);
-  
+
   useEffect(() => {
     if (!isLoading) {
       storage.setTags(tags);
       scheduleAutoSync();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tags, isLoading]);
-  
+
   useEffect(() => {
     if (!isLoading) {
       storage.setMerchants(merchants);
       scheduleAutoSync();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [merchants, isLoading]);
-  
+
   // Transaction actions
   const addTransaction = (transaction: Transaction) => {
     setTransactions([transaction, ...transactions]);
@@ -214,59 +238,68 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // 因為 calculateAccountBalance() 會根據交易動態計算當前餘額
     // account.balance 儲存的是「初始餘額」
   };
-  
-  const updateTransaction = (id: number, updatedTransaction: Partial<Transaction>) => {
-    setTransactions(prevTransactions =>
-      prevTransactions.map(t => t.id === id ? { ...t, ...updatedTransaction } : t)
+
+  const updateTransaction = (
+    id: number,
+    updatedTransaction: Partial<Transaction>
+  ) => {
+    setTransactions((prevTransactions) =>
+      prevTransactions.map((t) =>
+        t.id === id ? { ...t, ...updatedTransaction } : t
+      )
     );
   };
-  
+
   const deleteTransaction = (id: number) => {
-    setTransactions(prevTransactions => prevTransactions.filter(t => t.id !== id));
+    setTransactions((prevTransactions) =>
+      prevTransactions.filter((t) => t.id !== id)
+    );
   };
-  
+
   // Account actions
   const addAccount = (account: Account) => {
     setAccounts([...accounts, account]);
   };
-  
+
   const updateAccount = (id: number, updatedAccount: Partial<Account>) => {
-    setAccounts(prevAccounts =>
-      prevAccounts.map(a => a.id === id ? { ...a, ...updatedAccount } : a)
+    setAccounts((prevAccounts) =>
+      prevAccounts.map((a) => (a.id === id ? { ...a, ...updatedAccount } : a))
     );
   };
-  
+
   const deleteAccount = (id: number) => {
-    setAccounts(prevAccounts => prevAccounts.filter(a => a.id !== id));
+    setAccounts((prevAccounts) => prevAccounts.filter((a) => a.id !== id));
   };
-  
+
   // Category actions
   const addCategory = (category: Category) => {
     setCategories([...categories, category]);
   };
-  
+
   const deleteCategory = (id: number) => {
-    setCategories(prevCategories => prevCategories.filter(c => c.id !== id));
+    setCategories((prevCategories) =>
+      prevCategories.filter((c) => c.id !== id)
+    );
   };
-  
+
   // Tag actions
   const addTag = (tag: Tag) => {
     setTags([...tags, tag]);
   };
-  
+
   const deleteTag = (id: number) => {
-    setTags(prevTags => prevTags.filter(t => t.id !== id));
+    setTags((prevTags) => prevTags.filter((t) => t.id !== id));
   };
-  
+
   // Merchant actions
   const addMerchant = (merchant: Merchant) => {
     setMerchants([...merchants, merchant]);
   };
-  
+
   const deleteMerchant = (id: number) => {
-    setMerchants(prevMerchants => prevMerchants.filter(m => m.id !== id));
+    setMerchants((prevMerchants) => prevMerchants.filter((m) => m.id !== id));
   };
-  
+
   // Sync to Google Sheets
   const syncToCloud = async () => {
     setIsSyncing(true);
@@ -279,55 +312,65 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         merchants,
         exportDate: new Date().toISOString(),
       };
-      
+
       await googleSheetsService.saveToGoogleSheets(backupData);
-      
+
       // Update last sync time
       const now = new Date();
-      const timeStr = `${now.getFullYear()}/${(now.getMonth()+1).toString().padStart(2, '0')}/${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+      const timeStr = `${now.getFullYear()}/${(now.getMonth() + 1)
+        .toString()
+        .padStart(2, "0")}/${now.getDate().toString().padStart(2, "0")} ${now
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
       setLastSyncTime(timeStr);
       storage.setLastSync(timeStr);
-      
-      alert('已成功同步到 Google Drive！');
+
+      alert("已成功同步到 Google Drive！");
     } catch (error) {
-      console.error('Sync to cloud failed:', error);
-      alert(`同步失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
+      console.error("Sync to cloud failed:", error);
+      alert(`同步失敗：${error instanceof Error ? error.message : "未知錯誤"}`);
     } finally {
       setIsSyncing(false);
     }
   };
-  
+
   // Load from Google Sheets
   const loadFromCloud = async () => {
     setIsSyncing(true);
     try {
       const data = await googleSheetsService.loadFromGoogleSheets();
-      
+
       if (data) {
         setTransactions(data.transactions);
         setAccounts(data.accounts);
         setCategories(data.categories);
         setTags(data.tags);
         setMerchants(data.merchants);
-        
+
         // Update last sync time
         const now = new Date();
-        const timeStr = `${now.getFullYear()}/${(now.getMonth()+1).toString().padStart(2, '0')}/${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        const timeStr = `${now.getFullYear()}/${(now.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}/${now.getDate().toString().padStart(2, "0")} ${now
+          .getHours()
+          .toString()
+          .padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
         setLastSyncTime(timeStr);
         storage.setLastSync(timeStr);
-        
-        alert('已成功從 Google Drive 載入資料！');
+
+        alert("已成功從 Google Drive 載入資料！");
       } else {
-        alert('Google Drive 中尚無備份資料');
+        alert("Google Drive 中尚無備份資料");
       }
     } catch (error) {
-      console.error('Load from cloud failed:', error);
-      alert(`載入失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
+      console.error("Load from cloud failed:", error);
+      alert(`載入失敗：${error instanceof Error ? error.message : "未知錯誤"}`);
     } finally {
       setIsSyncing(false);
     }
   };
-  
+
   // Download backup as JSON file
   const downloadBackup = () => {
     const backupData = {
@@ -338,16 +381,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       merchants,
       exportDate: new Date().toISOString(),
     };
-    
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
-    const downloadAnchorNode = document.createElement('a');
+
+    const dataStr =
+      "data:text/json;charset=utf-8," +
+      encodeURIComponent(JSON.stringify(backupData, null, 2));
+    const downloadAnchorNode = document.createElement("a");
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `budget_backup_${new Date().toISOString().split('T')[0]}.json`);
+    downloadAnchorNode.setAttribute(
+      "download",
+      `budget_backup_${new Date().toISOString().split("T")[0]}.json`
+    );
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
   };
-  
+
   // Clear all data
   const clearAllData = () => {
     storage.clearAll();
@@ -356,7 +404,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setCategories([]);
     setTags([]);
     setMerchants([]);
-    setLastSyncTime('尚未備份');
+    setLastSyncTime("尚未備份");
   };
 
   // Toggle auto-sync
@@ -365,7 +413,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setAutoSyncEnabled(newValue);
     storage.setAutoSyncEnabled(newValue);
   };
-  
+
   const value: AppContextType = {
     transactions,
     accounts,
@@ -394,14 +442,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     clearAllData,
     toggleAutoSync,
   };
-  
+
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
 export const useAppContext = () => {
   const context = useContext(AppContext);
   if (context === undefined) {
-    throw new Error('useAppContext must be used within an AppProvider');
+    throw new Error("useAppContext must be used within an AppProvider");
   }
   return context;
 };

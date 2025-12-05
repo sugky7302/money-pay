@@ -5,16 +5,20 @@ import { useEffect, useState } from "react";
 
 type Config = {
     googleClientId: string;
+    autoSyncDelay: number;
+    minSyncInterval: number;
 };
 
 // 從 Vite 環境變數取得初始值
 const viteConfig: Config = {
     googleClientId:  import.meta.env.VITE_GOOGLE_CLIENT_ID,
+    autoSyncDelay: Number(import.meta.env.VITE_AUTO_SYNC_DELAY) || 30000,
+    minSyncInterval: Number(import.meta.env.VITE_MIN_SYNC_INTERVAL) || 60000,
 };
 
 // 檢查是否所有必要的設定都已從 Vite 取得
 function isConfigComplete(config: Config): boolean {
-    return Boolean(config.googleClientId);
+    return Boolean(config.googleClientId) && typeof config.autoSyncDelay === "number" && typeof config.minSyncInterval === "number";
 }
 
 // 全域快取
@@ -33,6 +37,8 @@ async function fetchConfigFromWorker(): Promise<Config> {
                 // 合併：Vite 環境變數優先，Worker 補充
                 configCache = {
                     googleClientId: viteConfig.googleClientId || data.googleClientId,
+                    autoSyncDelay: viteConfig.autoSyncDelay || data.autoSyncDelay,
+                    minSyncInterval: viteConfig.minSyncInterval || data.minSyncInterval,
                 };
                 return configCache;
             });
