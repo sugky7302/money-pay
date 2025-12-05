@@ -1,13 +1,13 @@
 // Transaction Form Feature
 
-import React, { useState, useEffect } from 'react';
-import { Transaction } from '../../shared/types';
+import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
 import { generateId, getCurrentDate } from '../../shared/lib/utils';
-import { Modal } from '../../shared/ui/Modal';
-import { Input } from '../../shared/ui/Input';
-import { Select } from '../../shared/ui/Select';
+import { Transaction } from '../../shared/types';
 import { Button } from '../../shared/ui/Button';
+import { Input } from '../../shared/ui/Input';
+import { Modal } from '../../shared/ui/Modal';
+import { Select } from '../../shared/ui/Select';
 
 interface TransactionFormProps {
   isOpen: boolean;
@@ -22,7 +22,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   transaction,
   mode = 'add'
 }) => {
-  const { categories, accounts, merchants, addTransaction, updateTransaction } = useAppContext();
+  const { categories, accounts, merchants, tags, addTransaction, updateTransaction } = useAppContext();
   
   const [formData, setFormData] = useState<Partial<Transaction>>({
     type: 'expense',
@@ -65,6 +65,21 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       type,
       category: filteredCategories.length > 0 ? filteredCategories[0].name : '',
     });
+  };
+
+  const handleTagToggle = (tagName: string) => {
+    const currentTags = formData.tags || [];
+    if (currentTags.includes(tagName)) {
+      setFormData({
+        ...formData,
+        tags: currentTags.filter(t => t !== tagName),
+      });
+    } else {
+      setFormData({
+        ...formData,
+        tags: [...currentTags, tagName],
+      });
+    }
   };
   
   const handleSubmit = () => {
@@ -175,6 +190,34 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           onChange={(e) => setFormData({...formData, note: e.target.value})}
           placeholder="例如：午餐"
         />
+
+        {tags.length > 0 && (
+          <div>
+            <label className="text-xs text-gray-500 font-medium ml-1 mb-2 block">
+              標籤（選填）
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => {
+                const isSelected = formData.tags?.includes(tag.name);
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => handleTagToggle(tag.name)}
+                    className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                      isSelected
+                        ? 'text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                    style={isSelected ? { backgroundColor: tag.color } : undefined}
+                  >
+                    {tag.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <Button 
           onClick={handleSubmit}

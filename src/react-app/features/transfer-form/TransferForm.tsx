@@ -1,13 +1,13 @@
 // Transfer Form Feature
 
 import React, { useState } from 'react';
-import { Transaction } from '../../shared/types';
 import { useAppContext } from '../../app/AppContext';
 import { generateId, getCurrentDate } from '../../shared/lib/utils';
-import { Modal } from '../../shared/ui/Modal';
-import { Input } from '../../shared/ui/Input';
-import { Select } from '../../shared/ui/Select';
+import { Transaction } from '../../shared/types';
 import { Button } from '../../shared/ui/Button';
+import { Input } from '../../shared/ui/Input';
+import { Modal } from '../../shared/ui/Modal';
+import { Select } from '../../shared/ui/Select';
 
 interface TransferFormProps {
   isOpen: boolean;
@@ -15,7 +15,7 @@ interface TransferFormProps {
 }
 
 export const TransferForm: React.FC<TransferFormProps> = ({ isOpen, onClose }) => {
-  const { accounts, addTransaction } = useAppContext();
+  const { accounts, tags, addTransaction } = useAppContext();
   
   const [formData, setFormData] = useState({
     fromAccount: accounts.length > 0 ? accounts[0].name : '',
@@ -23,7 +23,22 @@ export const TransferForm: React.FC<TransferFormProps> = ({ isOpen, onClose }) =
     amount: 0,
     date: getCurrentDate(),
     note: '',
+    selectedTags: [] as string[],
   });
+
+  const handleTagToggle = (tagName: string) => {
+    if (formData.selectedTags.includes(tagName)) {
+      setFormData({
+        ...formData,
+        selectedTags: formData.selectedTags.filter(t => t !== tagName),
+      });
+    } else {
+      setFormData({
+        ...formData,
+        selectedTags: [...formData.selectedTags, tagName],
+      });
+    }
+  };
   
   const handleSubmit = () => {
     if (!formData.amount || formData.amount <= 0) return;
@@ -40,6 +55,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({ isOpen, onClose }) =
       category: '轉帳',
       date: formData.date,
       note: formData.note,
+      tags: formData.selectedTags,
       fromAccount: formData.fromAccount,
       toAccount: formData.toAccount,
     };
@@ -54,6 +70,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({ isOpen, onClose }) =
       amount: 0,
       date: getCurrentDate(),
       note: '',
+      selectedTags: [],
     });
   };
   
@@ -88,14 +105,14 @@ export const TransferForm: React.FC<TransferFormProps> = ({ isOpen, onClose }) =
         {accountOptions.length > 0 && (
           <>
             <Select
-              label="從帳戶"
+              label="轉出帳戶"
               options={accountOptions}
               value={formData.fromAccount}
               onChange={(e) => setFormData({...formData, fromAccount: e.target.value})}
             />
             
             <Select
-              label="到帳戶"
+              label="轉入帳戶"
               options={accountOptions}
               value={formData.toAccount}
               onChange={(e) => setFormData({...formData, toAccount: e.target.value})}
@@ -117,6 +134,34 @@ export const TransferForm: React.FC<TransferFormProps> = ({ isOpen, onClose }) =
           onChange={(e) => setFormData({...formData, note: e.target.value})}
           placeholder="例如：定期存款轉入"
         />
+
+        {tags.length > 0 && (
+          <div>
+            <label className="text-xs text-gray-500 font-medium ml-1 mb-2 block">
+              標籤（選填）
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => {
+                const isSelected = formData.selectedTags.includes(tag.name);
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => handleTagToggle(tag.name)}
+                    className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                      isSelected
+                        ? 'text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                    style={isSelected ? { backgroundColor: tag.color } : undefined}
+                  >
+                    {tag.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <Button 
           onClick={handleSubmit}
