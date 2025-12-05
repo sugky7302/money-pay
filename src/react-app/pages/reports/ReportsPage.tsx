@@ -18,9 +18,12 @@ interface CategoryData {
   percentage: number;
 }
 
+type SortOption = 'month' | 'income' | 'expense' | 'balance';
+
 export const ReportsPage: React.FC = () => {
   const { transactions } = useAppContext();
   const [selectedPeriod, setSelectedPeriod] = useState<'6months' | '12months'>('6months');
+  const [sortBy, setSortBy] = useState<SortOption>('month');
   
   // Calculate monthly data for trends
   const monthlyData = useMemo((): MonthlyData[] => {
@@ -58,8 +61,22 @@ export const ReportsPage: React.FC = () => {
       d.balance = d.income - d.expense;
     });
     
-    return Object.values(data);
-  }, [transactions, selectedPeriod]);
+    const result = Object.values(data);
+    
+    // Apply sorting
+    switch (sortBy) {
+      case 'income':
+        return [...result].sort((a, b) => b.income - a.income);
+      case 'expense':
+        return [...result].sort((a, b) => b.expense - a.expense);
+      case 'balance':
+        return [...result].sort((a, b) => b.balance - a.balance);
+      case 'month':
+      default:
+        // Already in chronological order
+        return result;
+    }
+  }, [transactions, selectedPeriod, sortBy]);
   
   // Calculate top expense categories for the selected period
   const topExpenseCategories = useMemo((): CategoryData[] => {
@@ -168,9 +185,59 @@ export const ReportsPage: React.FC = () => {
       
       {/* Trend Chart */}
       <section className="mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <BarChart3 size={20} className="text-gray-700" />
-          <h2 className="text-lg font-bold text-gray-800">收支趨勢</h2>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <BarChart3 size={20} className="text-gray-700" />
+            <h2 className="text-lg font-bold text-gray-800">收支趨勢</h2>
+          </div>
+          
+          {/* Sort Buttons */}
+          <div className="flex gap-1">
+            <button
+              onClick={() => setSortBy('month')}
+              className={`px-2 py-1 text-xs rounded-lg transition-colors ${
+                sortBy === 'month'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title="按月份排序"
+            >
+              月份
+            </button>
+            <button
+              onClick={() => setSortBy('income')}
+              className={`px-2 py-1 text-xs rounded-lg transition-colors ${
+                sortBy === 'income'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title="按收入排序"
+            >
+              收入
+            </button>
+            <button
+              onClick={() => setSortBy('expense')}
+              className={`px-2 py-1 text-xs rounded-lg transition-colors ${
+                sortBy === 'expense'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title="按支出排序"
+            >
+              支出
+            </button>
+            <button
+              onClick={() => setSortBy('balance')}
+              className={`px-2 py-1 text-xs rounded-lg transition-colors ${
+                sortBy === 'balance'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title="按結餘排序"
+            >
+              結餘
+            </button>
+          </div>
         </div>
         
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
@@ -184,14 +251,14 @@ export const ReportsPage: React.FC = () => {
                     <span className="text-red-600">-{formatCurrency(data.expense).replace('NT$', '')}</span>
                   </div>
                 </div>
-                <div className="flex gap-1 h-8">
+                <div className="flex h-8">
                   <div 
-                    className="bg-green-500 rounded-full transition-all"
+                    className="bg-green-500 rounded-l-full transition-all"
                     style={{ width: `${maxAmount > 0 ? (data.income / maxAmount) * 100 : 0}%` }}
                     title={`收入: ${formatCurrency(data.income)}`}
                   />
                   <div 
-                    className="bg-red-500 rounded-full transition-all"
+                    className="bg-red-500 rounded-r-full transition-all"
                     style={{ width: `${maxAmount > 0 ? (data.expense / maxAmount) * 100 : 0}%` }}
                     title={`支出: ${formatCurrency(data.expense)}`}
                   />
