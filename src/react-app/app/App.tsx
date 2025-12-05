@@ -1,15 +1,16 @@
 // Main App Component
 
 import React, { useState } from 'react';
-import { Plus, Settings, Wallet, CreditCard, ArrowLeftRight } from 'lucide-react';
+import { Plus, Settings, Wallet, CreditCard, ArrowLeftRight, BarChart3 } from 'lucide-react';
 import { AppProvider } from './AppContext';
 import { HomePage } from '../pages/home/HomePage';
 import { AccountsPage } from '../pages/accounts/AccountsPage';
 import { SettingsPage } from '../pages/settings/SettingsPage';
+import { ReportsPage } from '../pages/reports/ReportsPage';
 import { TransactionForm } from '../features/transaction-form/TransactionForm';
 import { TransferForm } from '../features/transfer-form/TransferForm';
 
-type Tab = 'home' | 'accounts' | 'settings';
+type Tab = 'home' | 'accounts' | 'reports' | 'settings';
 
 const TabBar: React.FC<{ activeTab: Tab; setActiveTab: (tab: Tab) => void; onAddClick: () => void }> = ({ 
   activeTab, 
@@ -41,16 +42,20 @@ const TabBar: React.FC<{ activeTab: Tab; setActiveTab: (tab: Tab) => void; onAdd
     </button>
 
     <button 
+      onClick={() => setActiveTab('reports')} 
+      className={`flex flex-col items-center space-y-1 ${activeTab === 'reports' ? 'text-blue-500' : 'text-gray-400'}`}
+    >
+      <BarChart3 size={24} />
+      <span className="text-[10px] font-medium">報表</span>
+    </button>
+
+    <button 
       onClick={() => setActiveTab('settings')} 
       className={`flex flex-col items-center space-y-1 ${activeTab === 'settings' ? 'text-blue-500' : 'text-gray-400'}`}
     >
       <Settings size={24} />
       <span className="text-[10px] font-medium">設定</span>
     </button>
-    
-    <div className="opacity-0 w-0">
-      <span className="text-[10px]">占位</span>
-    </div>
   </div>
 );
 
@@ -139,6 +144,7 @@ const AppContent: React.FC = () => {
         <div className="flex-1 overflow-y-auto no-scrollbar">
           {activeTab === 'home' && <HomePage />}
           {activeTab === 'accounts' && <AccountsPage />}
+          {activeTab === 'reports' && <ReportsPage />}
           {activeTab === 'settings' && <SettingsPage setIsManagementModalOpen={setIsManagementModalOpen} />}
         </div>
         
