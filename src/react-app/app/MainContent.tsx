@@ -1,6 +1,9 @@
 // Main Content Component - Primary app layout after authentication
 
 import React, { useState } from "react";
+import { CategoryForm } from "../features/category-form/CategoryForm";
+import { MerchantForm } from "../features/merchant-form/MerchantForm";
+import { TagForm } from "../features/tag-form/TagForm";
 import { TransactionForm } from "../features/transaction-form/TransactionForm";
 import { TransferForm } from "../features/transfer-form/TransferForm";
 import { AccountsPage } from "../pages/accounts/AccountsPage";
@@ -23,7 +26,10 @@ export const MainContent: React.FC = () => {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showTransferForm, setShowTransferForm] = useState(false);
-  const { isSearchModalOpen, isManagementModalOpen } = useUIStore();
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [showMerchantModal, setShowMerchantModal] = useState(false);
+  const { isSearchModalOpen, isManagementModalOpen, setManagementModalOpen } = useUIStore();
 
   // Render active page
   const renderPage = () => {
@@ -50,6 +56,24 @@ export const MainContent: React.FC = () => {
     setShowTransferForm(true);
   };
 
+  const handleSelectCategory = () => {
+    setShowAddMenu(false);
+    setShowCategoryModal(true);
+    setManagementModalOpen(true);
+  };
+
+  const handleSelectTag = () => {
+    setShowAddMenu(false);
+    setShowTagModal(true);
+    setManagementModalOpen(true);
+  };
+
+  const handleSelectMerchant = () => {
+    setShowAddMenu(false);
+    setShowMerchantModal(true);
+    setManagementModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans md:flex md:items-center md:justify-center md:bg-gray-200">
       <div className="w-full min-h-screen md:min-h-[800px] md:max-h-[850px] md:max-w-[400px] md:bg-gray-50 md:rounded-[40px] md:shadow-2xl md:overflow-hidden relative flex flex-col">
@@ -72,6 +96,9 @@ export const MainContent: React.FC = () => {
           onClose={() => setShowAddMenu(false)}
           onSelectTransaction={handleSelectTransaction}
           onSelectTransfer={handleSelectTransfer}
+          onSelectCategory={handleSelectCategory}
+          onSelectTag={handleSelectTag}
+          onSelectMerchant={handleSelectMerchant}
         />
 
         <TransactionForm
@@ -83,6 +110,30 @@ export const MainContent: React.FC = () => {
         <TransferForm
           isOpen={showTransferForm}
           onClose={() => setShowTransferForm(false)}
+        />
+
+        <CategoryForm
+          isOpen={showCategoryModal}
+          onClose={() => {
+            setShowCategoryModal(false);
+            setManagementModalOpen(false);
+          }}
+        />
+
+        <TagForm
+          isOpen={showTagModal}
+          onClose={() => {
+            setShowTagModal(false);
+            setManagementModalOpen(false);
+          }}
+        />
+
+        <MerchantForm
+          isOpen={showMerchantModal}
+          onClose={() => {
+            setShowMerchantModal(false);
+            setManagementModalOpen(false);
+          }}
         />
       </div>
     </div>

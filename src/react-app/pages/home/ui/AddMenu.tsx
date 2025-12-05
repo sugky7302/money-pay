@@ -1,6 +1,6 @@
 // Add Menu Component
 
-import { ArrowLeftRight, Plus } from "lucide-react";
+import { ArrowLeftRight, FolderPlus, Plus, Store, Tag } from "lucide-react";
 import React from "react";
 
 interface AddMenuProps {
@@ -8,6 +8,9 @@ interface AddMenuProps {
   onClose: () => void;
   onSelectTransaction: () => void;
   onSelectTransfer: () => void;
+  onSelectCategory: () => void;
+  onSelectTag: () => void;
+  onSelectMerchant: () => void;
 }
 
 export const AddMenu: React.FC<AddMenuProps> = ({
@@ -15,6 +18,9 @@ export const AddMenu: React.FC<AddMenuProps> = ({
   onClose,
   onSelectTransaction,
   onSelectTransfer,
+  onSelectCategory,
+  onSelectTag,
+  onSelectMerchant,
 }) => {
   if (!isOpen) return null;
 
@@ -53,6 +59,45 @@ export const AddMenu: React.FC<AddMenuProps> = ({
             <div className="text-left">
               <h3 className="font-bold">轉帳</h3>
               <p className="text-xs text-green-600">帳戶之間轉帳</p>
+            </div>
+          </button>
+
+          <button
+            onClick={onSelectCategory}
+            className="w-full bg-purple-50 hover:bg-purple-100 text-purple-700 p-4 rounded-xl flex items-center gap-4 transition-colors"
+          >
+            <div className="bg-purple-500 text-white p-3 rounded-full">
+              <FolderPlus size={24} />
+            </div>
+            <div className="text-left">
+              <h3 className="font-bold">管理分類</h3>
+              <p className="text-xs text-purple-600">新增或編輯分類</p>
+            </div>
+          </button>
+
+          <button
+            onClick={onSelectTag}
+            className="w-full bg-teal-50 hover:bg-teal-100 text-teal-700 p-4 rounded-xl flex items-center gap-4 transition-colors"
+          >
+            <div className="bg-teal-500 text-white p-3 rounded-full">
+              <Tag size={24} />
+            </div>
+            <div className="text-left">
+              <h3 className="font-bold">管理標籤</h3>
+              <p className="text-xs text-teal-600">新增或編輯標籤</p>
+            </div>
+          </button>
+
+          <button
+            onClick={onSelectMerchant}
+            className="w-full bg-orange-50 hover:bg-orange-100 text-orange-700 p-4 rounded-xl flex items-center gap-4 transition-colors"
+          >
+            <div className="bg-orange-500 text-white p-3 rounded-full">
+              <Store size={24} />
+            </div>
+            <div className="text-left">
+              <h3 className="font-bold">管理商家</h3>
+              <p className="text-xs text-orange-600">新增或編輯商家</p>
             </div>
           </button>
         </div>
