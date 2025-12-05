@@ -9,7 +9,7 @@ type Config = {
 
 // 從 Vite 環境變數取得初始值
 const viteConfig: Config = {
-    googleClientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || "",
+    googleClientId:  import.meta.env.VITE_GOOGLE_CLIENT_ID,
 };
 
 // 檢查是否所有必要的設定都已從 Vite 取得

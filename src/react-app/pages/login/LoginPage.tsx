@@ -1,49 +1,20 @@
 // Login Page with Google Sign-In
 
+import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
 import { Wallet } from "lucide-react";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback } from "react";
 import { useAuth } from "../../app/AuthContext";
-import { useConfig } from "../../shared/lib";
-
-declare global {
-  interface Window {
-    google: {
-      accounts: {
-        id: {
-          initialize: (config: {
-            client_id: string;
-            callback: (response: { credential: string }) => void;
-          }) => void;
-          renderButton: (
-            parent: HTMLElement,
-            options: {
-              theme?: string;
-              size?: string;
-              text?: string;
-              shape?: string;
-              locale?: string;
-            }
-          ) => void;
-          prompt: () => void;
-        };
-      };
-    };
-  }
-}
-
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
-  const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
-  const [configError, setConfigError] = useState<string | null>(null);
-  const { config } = useConfig();
 
-  const handleGoogleSignIn = useCallback(
-    (response: { credential: string }) => {
+  const handleGoogleSuccess = useCallback(
+    (response: CredentialResponse) => {
       try {
-        // Decode the JWT token to get user info
-        // Note: This is only for display purposes. The token should be validated
-        // on the server side for any security-sensitive operations.
+        if (!response.credential) {
+          throw new Error("No credential received");
+        }
+
         const token = response.credential;
 
         // Validate token structure before parsing
@@ -83,76 +54,13 @@ export const LoginPage: React.FC = () => {
     [login]
   );
 
-  useEffect(() => {
-    // Load Google Sign-In script
-    const loadGoogleScript = () => {
-      // Check if Google Client ID is configured
-      if (!config?.googleClientId) {
-        setConfigError(
-          "Google Client ID 未設定。請參考 GOOGLE_OAUTH_SETUP.md 文件進行設定。"
-        );
-        return;
-      }
-
-      const script = document.createElement("script");
-      script.src = "https://accounts.google.com/gsi/client";
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        setIsGoogleLoaded(true);
-      };
-      script.onerror = () => {
-        setConfigError("無法載入 Google 登入服務，請檢查網路連線。");
-      };
-      document.body.appendChild(script);
-    };
-
-    loadGoogleScript();
+  const handleGoogleError = useCallback(() => {
+    console.error("Google Sign-In failed");
+    alert("Google 登入失敗，請稍後再試。");
   }, []);
 
-  useEffect(() => {
-    if (isGoogleLoaded && window.google) {
-      // Double-check config?.googleClientId is available before initializing
-      if (!config?.googleClientId) {
-        setConfigError(
-          "Google Client ID 未設定。請參考 GOOGLE_OAUTH_SETUP.md 文件進行設定。"
-        );
-        return;
-      }
-
-      try {
-        // Initialize Google Sign-In
-        window.google.accounts.id.initialize({
-          client_id: config.googleClientId,
-          callback: handleGoogleSignIn,
-        });
-
-        // Render the Google Sign-In button
-        const buttonDiv = document.getElementById("googleSignInButton");
-        if (buttonDiv) {
-          window.google.accounts.id.renderButton(buttonDiv, {
-            theme: "outline",
-            size: "large",
-            text: "signin_with",
-            shape: "rectangular",
-            locale: "zh_TW",
-          });
-        }
-
-        // Show the One Tap prompt only on initial load for better UX
-        // This can be commented out if the behavior is too intrusive
-        // window.google.accounts.id.prompt();
-      } catch (error) {
-        console.error("Error initializing Google Sign-In:", error);
-        setConfigError(
-          "初始化 Google 登入失敗，請重新整理頁面或聯絡系統管理員。"
-        );
-      }
-    }
-  }, [isGoogleLoaded, handleGoogleSignIn]);
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
           <div className="bg-blue-500 text-white p-4 rounded-full mb-4">
@@ -171,33 +79,19 @@ export const LoginPage: React.FC = () => {
               請使用 Google 帳號登入以繼續使用
             </p>
           </div>
-          
-          <div className="flex flex-col items-center space-y-4">
-            {configError ? (
-              <div className="w-full p-4 bg-red-50 border border-red-200 rounded-xl">
-                <p className="text-red-700 text-sm text-center">
-                  {configError}
-                </p>
-                <p className="text-red-600 text-xs text-center mt-2">
-                  請聯絡系統管理員或參考 GOOGLE_OAUTH_SETUP.md 文件
-                </p>
-              </div>
-            ) : (
-              <>
-                <div
-                  id="googleSignInButton"
-                  className="w-full flex justify-center"
-                ></div>
 
-                {!isGoogleLoaded && (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-                    <span className="text-gray-500 text-sm">載入中...</span>
-                  </div>
-                )}
-              </>
-            )}
+          <div className="flex flex-col items-center space-y-4">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              theme="outline"
+              size="large"
+              text="signin_with"
+              shape="rectangular"
+              locale="zh_TW"
+            />
           </div>
+
           <div className="pt-6 border-t border-gray-200">
             <p className="text-xs text-gray-500 text-center">
               使用 Google 登入即表示您同意我們的服務條款和隱私政策

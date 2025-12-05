@@ -1,7 +1,0 @@
-/* App specific styles - minimal as most styling is inline with Tailwind-like classes */
-
-#root {
-  width: 100%;
-  min-height: 100vh;
-}
-

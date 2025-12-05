@@ -1,196 +1,90 @@
 // Main App Component
 
-import { ArrowLeftRight, BarChart3, CreditCard, Plus, Settings, Wallet } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
-import { TransactionForm } from '../features/transaction-form/TransactionForm';
-import { TransferForm } from '../features/transfer-form/TransferForm';
-import { AccountsPage } from '../pages/accounts/AccountsPage';
-import { HomePage } from '../pages/home/HomePage';
-import { LoginPage } from '../pages/login/LoginPage';
-import { ReportsPage } from '../pages/reports/ReportsPage';
-import { SettingsPage } from '../pages/settings/SettingsPage';
-import { prefetchConfig } from '../shared/lib';
-import { AppProvider } from './AppContext';
-import { AuthProvider, useAuth } from './AuthContext';
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import React, { useState } from "react";
+import { TransactionForm } from "../features/transaction-form/TransactionForm";
+import { TransferForm } from "../features/transfer-form/TransferForm";
+import { AccountsPage } from "../pages/accounts/AccountsPage";
+import { HomePage } from "../pages/home/HomePage";
+import { LoginPage } from "../pages/login/LoginPage";
+import { ReportsPage } from "../pages/reports/ReportsPage";
+import { SettingsPage } from "../pages/settings/SettingsPage";
+import { useConfig } from "../shared/lib";
+import { AddMenu } from "../shared/ui/AddMenu";
+import { Tab, TabBar } from "../shared/ui/TabBar";
+import { AppProvider } from "./AppContext";
+import { AuthProvider, useAuth } from "./AuthContext";
 
-type Tab = 'home' | 'accounts' | 'reports' | 'settings';
-
-const TabBar: React.FC<{ activeTab: Tab; setActiveTab: (tab: Tab) => void; onAddClick: () => void }> = ({ 
-  activeTab, 
-  setActiveTab, 
-  onAddClick 
+// Loading Component
+const LoadingScreen: React.FC<{ message?: string }> = ({
+  message = "載入中...",
 }) => (
-  <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-200 pb-safe pt-2 px-6 flex justify-between items-center z-50 h-20 md:max-w-md md:mx-auto md:relative md:border-t-0 md:bg-transparent">
-    <button 
-      onClick={() => setActiveTab('home')} 
-      className={`flex flex-col items-center space-y-1 ${activeTab === 'home' ? 'text-blue-500' : 'text-gray-400'}`}
-    >
-      <Wallet size={24} />
-      <span className="text-[10px] font-medium">錢包</span>
-    </button>
-    
-    <button 
-      onClick={() => setActiveTab('accounts')} 
-      className={`flex flex-col items-center space-y-1 ${activeTab === 'accounts' ? 'text-blue-500' : 'text-gray-400'}`}
-    >
-      <CreditCard size={24} />
-      <span className="text-[10px] font-medium">帳戶</span>
-    </button>
-    
-    <button 
-      onClick={onAddClick} 
-      className="bg-blue-500 text-white p-4 rounded-full shadow-lg transform -translate-y-4 hover:bg-blue-600 transition-colors active:scale-95"
-    >
-      <Plus size={28} />
-    </button>
-
-    <button 
-      onClick={() => setActiveTab('reports')} 
-      className={`flex flex-col items-center space-y-1 ${activeTab === 'reports' ? 'text-blue-500' : 'text-gray-400'}`}
-    >
-      <BarChart3 size={24} />
-      <span className="text-[10px] font-medium">報表</span>
-    </button>
-
-    <button 
-      onClick={() => setActiveTab('settings')} 
-      className={`flex flex-col items-center space-y-1 ${activeTab === 'settings' ? 'text-blue-500' : 'text-gray-400'}`}
-    >
-      <Settings size={24} />
-      <span className="text-[10px] font-medium">設定</span>
-    </button>
+  <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="flex flex-col items-center space-y-4">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <p className="text-gray-600">{message}</p>
+    </div>
   </div>
 );
 
-const AddMenu: React.FC<{ 
-  isOpen: boolean; 
-  onClose: () => void; 
-  onSelectTransaction: () => void;
-  onSelectTransfer: () => void;
-}> = ({ 
-  isOpen, 
-  onClose, 
-  onSelectTransaction,
-  onSelectTransfer 
-}) => {
-  if (!isOpen) return null;
-  
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center">
-      <div 
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm" 
-        onClick={onClose}
-      />
-      <div className="bg-white w-full md:w-[450px] md:rounded-2xl rounded-t-3xl p-6 relative z-10 animate-in slide-in-from-bottom duration-300 shadow-2xl">
-        <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-6 md:hidden" />
-        
-        <h2 className="text-xl font-bold text-gray-800 mb-4">新增紀錄</h2>
-        
-        <div className="space-y-3">
-          <button
-            onClick={onSelectTransaction}
-            className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 p-4 rounded-xl flex items-center gap-4 transition-colors"
-          >
-            <div className="bg-blue-500 text-white p-3 rounded-full">
-              <Plus size={24} />
-            </div>
-            <div className="text-left">
-              <h3 className="font-bold">收入 / 支出</h3>
-              <p className="text-xs text-blue-600">記錄一般交易</p>
-            </div>
-          </button>
-          
-          <button
-            onClick={onSelectTransfer}
-            className="w-full bg-green-50 hover:bg-green-100 text-green-700 p-4 rounded-xl flex items-center gap-4 transition-colors"
-          >
-            <div className="bg-green-500 text-white p-3 rounded-full">
-              <ArrowLeftRight size={24} />
-            </div>
-            <div className="text-left">
-              <h3 className="font-bold">轉帳</h3>
-              <p className="text-xs text-green-600">帳戶之間轉帳</p>
-            </div>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const AppContent: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<Tab>('home');
+// Main Content Component (after authentication)
+const MainContent: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<Tab>("home");
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showTransferForm, setShowTransferForm] = useState(false);
   const [isManagementModalOpen, setIsManagementModalOpen] = useState(false);
-  
-  // Show loading state while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-          <p className="text-gray-600">載入中...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  // Show login page if not authenticated
-  if (!isAuthenticated) {
-    return <LoginPage />;
-  }
-  
+
   const handleAddClick = () => {
     setShowAddMenu(true);
   };
-  
+
   const handleSelectTransaction = () => {
     setShowAddMenu(false);
     setShowTransactionForm(true);
   };
-  
+
   const handleSelectTransfer = () => {
     setShowAddMenu(false);
     setShowTransferForm(true);
   };
-  
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans md:flex md:items-center md:justify-center md:bg-gray-200">
       <div className="w-full min-h-screen md:min-h-[800px] md:max-h-[850px] md:max-w-[400px] md:bg-gray-50 md:rounded-[40px] md:shadow-2xl md:overflow-hidden relative flex flex-col">
         <div className="hidden md:block absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-gray-900 rounded-b-2xl z-50" />
-        
+
         <div className="flex-1 overflow-y-auto no-scrollbar">
-          {activeTab === 'home' && <HomePage />}
-          {activeTab === 'accounts' && <AccountsPage />}
-          {activeTab === 'reports' && <ReportsPage />}
-          {activeTab === 'settings' && <SettingsPage setIsManagementModalOpen={setIsManagementModalOpen} />}
+          {activeTab === "home" && <HomePage />}
+          {activeTab === "accounts" && <AccountsPage />}
+          {activeTab === "reports" && <ReportsPage />}
+          {activeTab === "settings" && (
+            <SettingsPage setIsManagementModalOpen={setIsManagementModalOpen} />
+          )}
         </div>
-        
+
         {!isManagementModalOpen && (
-          <TabBar 
-            activeTab={activeTab} 
-            setActiveTab={setActiveTab} 
+          <TabBar
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
             onAddClick={handleAddClick}
           />
         )}
-        
+
         <AddMenu
           isOpen={showAddMenu}
           onClose={() => setShowAddMenu(false)}
           onSelectTransaction={handleSelectTransaction}
           onSelectTransfer={handleSelectTransfer}
         />
-        
-        <TransactionForm 
+
+        <TransactionForm
           isOpen={showTransactionForm}
           onClose={() => setShowTransactionForm(false)}
           mode="add"
         />
-        
-        <TransferForm 
+
+        <TransferForm
           isOpen={showTransferForm}
           onClose={() => setShowTransferForm(false)}
         />
@@ -199,16 +93,64 @@ const AppContent: React.FC = () => {
   );
 };
 
-export const App: React.FC = () => {
-  // 預先載入常用的 KV 資料和設定
-    useEffect(() => {
-        prefetchConfig();
-    }, []);
+// App Content with Auth Check
+const AppContent: React.FC = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingScreen message="驗證中..." />;
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
+
+  return <MainContent />;
+};
+
+// Google OAuth Wrapper - waits for config to load
+const GoogleOAuthWrapper: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const { config, loading, error } = useConfig();
+
+  if (loading) {
+    return <LoadingScreen message="載入設定中..." />;
+  }
+
+  console.log("Config in GoogleOAuthWrapper:", config, error);
+
+  if (error || !config?.googleClientId) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-lg p-6 max-w-md text-center">
+          <div className="text-red-500 text-5xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">設定錯誤</h2>
+          <p className="text-gray-600">
+            {error?.message ||
+              "Google Client ID 未設定。請參考 GOOGLE_OAUTH_SETUP.md 文件進行設定。"}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <AuthProvider>
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
-    </AuthProvider>
+    <GoogleOAuthProvider clientId={config.googleClientId}>
+      {children}
+    </GoogleOAuthProvider>
+  );
+};
+
+// Main App Export
+export default function App() {
+  return (
+    <GoogleOAuthWrapper>
+      <AuthProvider>
+        <AppProvider>
+          <AppContent />
+        </AppProvider>
+      </AuthProvider>
+    </GoogleOAuthWrapper>
   );
 };

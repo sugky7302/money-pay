@@ -11,4 +11,10 @@ export default defineConfig({
             "@": path.resolve(__dirname, "./src"),
         },
     },
+	server: {
+		headers: {
+			// Allow Google Sign-In popup to communicate with the main window
+			"Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+		},
+	},
 });

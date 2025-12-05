@@ -12,6 +12,7 @@
 		"publish": true
 	},
 	"dependencies": {
+		"@react-oauth/google": "^0.12.2",
 		"@tailwindcss/vite": "^4.1.17",
 		"hono": "4.10.7",
 		"lucide-react": "^0.555.0",
