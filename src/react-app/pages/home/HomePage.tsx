@@ -12,6 +12,7 @@ import { TransactionList } from '../../widgets/transaction-list/TransactionList'
 
 type SortOrder = 'newest' | 'oldest';
 type DisplayLimit = 10 | 20 | 50 | 100 | 'all';
+type FilterState = 'none' | 'include' | 'exclude';
 
 const TYPE_LABELS: Record<TransactionType, string> = {
   expense: '支出',
@@ -33,7 +34,12 @@ export const HomePage: React.FC = () => {
   
   // 篩選狀態
   const [showFilterMenu, setShowFilterMenu] = useState(false);
-  const [filterType, setFilterType] = useState<TransactionType | 'all'>('all');
+  const [filterTypeStates, setFilterTypeStates] = useState<Record<TransactionType, FilterState>>({
+    expense: 'none',
+    income: 'none',
+    transfer: 'none',
+    adjustment: 'none',
+  });
   const [filterCategory, setFilterCategory] = useState<string>('all');
   
   const handleSync = async () => {
@@ -54,6 +60,17 @@ export const HomePage: React.FC = () => {
     setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest');
   };
 
+  // 切換類型篩選狀態：none -> include -> exclude -> none
+  const toggleFilterType = (type: TransactionType) => {
+    setFilterTypeStates(prev => {
+      const currentState = prev[type];
+      const nextState: FilterState = 
+        currentState === 'none' ? 'include' :
+        currentState === 'include' ? 'exclude' : 'none';
+      return { ...prev, [type]: nextState };
+    });
+  };
+
   // 取得所有類別（從交易中）
   const allCategories = useMemo(() => {
     const categorySet = new Set<string>();
@@ -64,11 +81,16 @@ export const HomePage: React.FC = () => {
   }, [transactions]);
 
   // 檢查是否有啟用篩選
-  const hasActiveFilter = filterType !== 'all' || filterCategory !== 'all';
+  const hasActiveFilter = Object.values(filterTypeStates).some(state => state !== 'none') || filterCategory !== 'all';
 
   // 清除篩選
   const clearFilters = () => {
-    setFilterType('all');
+    setFilterTypeStates({
+      expense: 'none',
+      income: 'none',
+      transfer: 'none',
+      adjustment: 'none',
+    });
     setFilterCategory('all');
   };
 
@@ -77,8 +99,19 @@ export const HomePage: React.FC = () => {
     let sourceTransactions = isSearchActive ? filteredTransactions : transactions;
     
     // 套用類型篩選
-    if (filterType !== 'all') {
-      sourceTransactions = sourceTransactions.filter(t => t.type === filterType);
+    const includeTypes = (Object.keys(filterTypeStates) as TransactionType[])
+      .filter(type => filterTypeStates[type] === 'include');
+    const excludeTypes = (Object.keys(filterTypeStates) as TransactionType[])
+      .filter(type => filterTypeStates[type] === 'exclude');
+    
+    // 如果有 include 篩選，只顯示這些類型
+    if (includeTypes.length > 0) {
+      sourceTransactions = sourceTransactions.filter(t => includeTypes.includes(t.type));
+    }
+    
+    // 排除指定類型
+    if (excludeTypes.length > 0) {
+      sourceTransactions = sourceTransactions.filter(t => !excludeTypes.includes(t.type));
     }
     
     // 套用類別篩選
@@ -98,19 +131,30 @@ export const HomePage: React.FC = () => {
       return sorted;
     }
     return sorted.slice(0, displayLimit);
-  }, [isSearchActive, filteredTransactions, transactions, sortOrder, displayLimit, filterType, filterCategory]);
+  }, [isSearchActive, filteredTransactions, transactions, sortOrder, displayLimit, filterTypeStates, filterCategory]);
 
   // 篩選後的總數
   const filteredCount = useMemo(() => {
     let source = isSearchActive ? filteredTransactions : transactions;
-    if (filterType !== 'all') {
-      source = source.filter(t => t.type === filterType);
+    
+    const includeTypes = (Object.keys(filterTypeStates) as TransactionType[])
+      .filter(type => filterTypeStates[type] === 'include');
+    const excludeTypes = (Object.keys(filterTypeStates) as TransactionType[])
+      .filter(type => filterTypeStates[type] === 'exclude');
+    
+    if (includeTypes.length > 0) {
+      source = source.filter(t => includeTypes.includes(t.type));
     }
+    
+    if (excludeTypes.length > 0) {
+      source = source.filter(t => !excludeTypes.includes(t.type));
+    }
+    
     if (filterCategory !== 'all') {
       source = source.filter(t => t.category === filterCategory);
     }
     return source.length;
-  }, [isSearchActive, filteredTransactions, transactions, filterType, filterCategory]);
+  }, [isSearchActive, filteredTransactions, transactions, filterTypeStates, filterCategory]);
 
   const totalCount = isSearchActive ? filteredTransactions.length : transactions.length;
   
@@ -168,7 +212,7 @@ export const HomePage: React.FC = () => {
                 篩選
                 {hasActiveFilter && (
                   <span className="bg-blue-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center">
-                    {(filterType !== 'all' ? 1 : 0) + (filterCategory !== 'all' ? 1 : 0)}
+                    {Object.values(filterTypeStates).filter(state => state !== 'none').length + (filterCategory !== 'all' ? 1 : 0)}
                   </span>
                 )}
               </button>
@@ -184,25 +228,24 @@ export const HomePage: React.FC = () => {
                     <div className="mb-3">
                       <label className="text-xs font-medium text-gray-500 mb-1.5 block">交易類型</label>
                       <div className="flex flex-wrap gap-1">
-                        <button
-                          onClick={() => setFilterType('all')}
-                          className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                            filterType === 'all' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                        >
-                          全部
-                        </button>
-                        {(Object.keys(TYPE_LABELS) as TransactionType[]).map(type => (
-                          <button
-                            key={type}
-                            onClick={() => setFilterType(type)}
-                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                              filterType === type ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                          >
-                            {TYPE_LABELS[type]}
-                          </button>
-                        ))}
+                        {(Object.keys(TYPE_LABELS) as TransactionType[]).map(type => {
+                          const state = filterTypeStates[type];
+                          return (
+                            <button
+                              key={type}
+                              onClick={() => toggleFilterType(type)}
+                              className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                                state === 'include' 
+                                  ? 'bg-green-500 text-white' 
+                                  : state === 'exclude' 
+                                  ? 'bg-red-500 text-white' 
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}
+                            >
+                              {TYPE_LABELS[type]}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                     
@@ -299,14 +342,29 @@ export const HomePage: React.FC = () => {
         {/* Active Filter Tags */}
         {hasActiveFilter && (
           <div className="flex flex-wrap gap-2 mb-3">
-            {filterType !== 'all' && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded-full">
-                {TYPE_LABELS[filterType]}
-                <button onClick={() => setFilterType('all')} className="hover:text-blue-800">
-                  <X size={12} />
-                </button>
-              </span>
-            )}
+            {(Object.keys(filterTypeStates) as TransactionType[]).map(type => {
+              const state = filterTypeStates[type];
+              if (state === 'none') return null;
+              
+              return (
+                <span 
+                  key={type}
+                  className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full ${
+                    state === 'include' 
+                      ? 'bg-green-50 text-green-600' 
+                      : 'bg-red-50 text-red-600'
+                  }`}
+                >
+                  {state === 'include' ? '✓' : '✗'} {TYPE_LABELS[type]}
+                  <button 
+                    onClick={() => toggleFilterType(type)} 
+                    className={state === 'include' ? 'hover:text-green-800' : 'hover:text-red-800'}
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              );
+            })}
             {filterCategory !== 'all' && (
               <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded-full">
                 {filterCategory}
