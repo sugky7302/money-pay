@@ -77,6 +77,13 @@ export interface Merchant {
   category?: string;
 }
 
+export interface CurrencyInfo {
+  id: number;
+  code: string;
+  name: string;
+  symbol: string;
+}
+
 export interface SearchFilters {
   startDate?: string;
   endDate?: string;
