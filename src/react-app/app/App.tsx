@@ -6,12 +6,12 @@ import { TransactionForm } from "../features/transaction-form/TransactionForm";
 import { TransferForm } from "../features/transfer-form/TransferForm";
 import { AccountsPage } from "../pages/accounts/AccountsPage";
 import { HomePage } from "../pages/home/HomePage";
+import { AddMenu } from "../pages/home/ui/AddMenu";
+import { Tab, TabBar } from "../pages/home/ui/TabBar";
 import { LoginPage } from "../pages/login/LoginPage";
 import { ReportsPage } from "../pages/reports/ReportsPage";
 import { SettingsPage } from "../pages/settings/SettingsPage";
 import { useConfig } from "../shared/lib";
-import { AddMenu } from "../shared/ui/AddMenu";
-import { Tab, TabBar } from "../shared/ui/TabBar";
 import { AppProvider } from "./AppContext";
 import { AuthProvider, useAuth } from "./AuthContext";
 

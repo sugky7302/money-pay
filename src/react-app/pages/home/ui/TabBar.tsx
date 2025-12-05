@@ -22,7 +22,7 @@ export const TabBar: React.FC<TabBarProps> = ({
   setActiveTab,
   onAddClick,
 }) => (
-  <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-200 pb-safe pt-2 px-4 z-50 h-20 md:max-w-md md:mx-auto md:relative md:border-t-0 md:bg-transparent">
+  <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 pb-safe pt-2 px-4 z-50 h-20">
     <div className="grid grid-cols-5 gap-2 items-center max-w-md mx-auto">
       <button
         onClick={() => setActiveTab("home")}
