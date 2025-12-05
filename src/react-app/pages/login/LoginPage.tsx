@@ -44,19 +44,38 @@ export const LoginPage: React.FC = () => {
       // Note: This is only for display purposes. The token should be validated
       // on the server side for any security-sensitive operations.
       const token = response.credential;
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      
+      // Validate token structure before parsing
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        throw new Error('Invalid token format');
+      }
+      
+      // Parse JWT payload with proper error handling
+      let payload;
+      try {
+        payload = JSON.parse(atob(parts[1]));
+      } catch {
+        throw new Error('Failed to parse token payload');
+      }
+      
+      // Validate required fields exist
+      if (!payload.name || !payload.email) {
+        throw new Error('Invalid token data: missing required fields');
+      }
       
       const userInfo = {
         name: payload.name,
         email: payload.email,
-        picture: payload.picture,
+        picture: payload.picture || '',
       };
 
       // Call the login function from AuthContext
       login(token, userInfo);
     } catch (error) {
       console.error('Error during Google Sign-In:', error);
-      alert('登入失敗，請稍後再試');
+      const errorMessage = error instanceof Error ? error.message : '登入失敗';
+      alert(`登入失敗：${errorMessage}。請稍後再試或聯絡系統管理員。`);
     }
   }, [login]);
 
@@ -87,27 +106,38 @@ export const LoginPage: React.FC = () => {
 
   useEffect(() => {
     if (isGoogleLoaded && window.google) {
-      // Initialize Google Sign-In
-      window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleGoogleSignIn,
-      });
-
-      // Render the Google Sign-In button
-      const buttonDiv = document.getElementById('googleSignInButton');
-      if (buttonDiv) {
-        window.google.accounts.id.renderButton(buttonDiv, {
-          theme: 'outline',
-          size: 'large',
-          text: 'signin_with',
-          shape: 'rectangular',
-          locale: 'zh_TW',
-        });
+      // Double-check GOOGLE_CLIENT_ID is available before initializing
+      if (!GOOGLE_CLIENT_ID) {
+        setConfigError('Google Client ID 未設定。請參考 GOOGLE_OAUTH_SETUP.md 文件進行設定。');
+        return;
       }
 
-      // Show the One Tap prompt only on initial load for better UX
-      // This can be commented out if the behavior is too intrusive
-      // window.google.accounts.id.prompt();
+      try {
+        // Initialize Google Sign-In
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleGoogleSignIn,
+        });
+
+        // Render the Google Sign-In button
+        const buttonDiv = document.getElementById('googleSignInButton');
+        if (buttonDiv) {
+          window.google.accounts.id.renderButton(buttonDiv, {
+            theme: 'outline',
+            size: 'large',
+            text: 'signin_with',
+            shape: 'rectangular',
+            locale: 'zh_TW',
+          });
+        }
+
+        // Show the One Tap prompt only on initial load for better UX
+        // This can be commented out if the behavior is too intrusive
+        // window.google.accounts.id.prompt();
+      } catch (error) {
+        console.error('Error initializing Google Sign-In:', error);
+        setConfigError('初始化 Google 登入失敗，請重新整理頁面或聯絡系統管理員。');
+      }
     }
   }, [isGoogleLoaded, handleGoogleSignIn]);
 
