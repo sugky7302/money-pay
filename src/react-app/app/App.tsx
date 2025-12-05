@@ -1,16 +1,17 @@
 // Main App Component
 
-import React, { useState } from 'react';
-import { Plus, Settings, Wallet, CreditCard, ArrowLeftRight, BarChart3 } from 'lucide-react';
-import { AuthProvider, useAuth } from './AuthContext';
-import { AppProvider } from './AppContext';
-import { HomePage } from '../pages/home/HomePage';
-import { AccountsPage } from '../pages/accounts/AccountsPage';
-import { SettingsPage } from '../pages/settings/SettingsPage';
-import { LoginPage } from '../pages/login/LoginPage';
-import { ReportsPage } from '../pages/reports/ReportsPage';
+import { ArrowLeftRight, BarChart3, CreditCard, Plus, Settings, Wallet } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { TransactionForm } from '../features/transaction-form/TransactionForm';
 import { TransferForm } from '../features/transfer-form/TransferForm';
+import { AccountsPage } from '../pages/accounts/AccountsPage';
+import { HomePage } from '../pages/home/HomePage';
+import { LoginPage } from '../pages/login/LoginPage';
+import { ReportsPage } from '../pages/reports/ReportsPage';
+import { SettingsPage } from '../pages/settings/SettingsPage';
+import { prefetchConfig } from '../shared/lib';
+import { AppProvider } from './AppContext';
+import { AuthProvider, useAuth } from './AuthContext';
 
 type Tab = 'home' | 'accounts' | 'reports' | 'settings';
 
@@ -199,6 +200,10 @@ const AppContent: React.FC = () => {
 };
 
 export const App: React.FC = () => {
+  // 預先載入常用的 KV 資料和設定
+    useEffect(() => {
+        prefetchConfig();
+    }, []);
   return (
     <AuthProvider>
       <AppProvider>

@@ -6,6 +6,7 @@ declare namespace Cloudflare {
 		mainModule: typeof import("./src/worker/index");
 	}
 	interface Env {
+		GOOGLE_CLIENT_ID: string;
 	}
 }
 interface Env extends Cloudflare.Env {}
