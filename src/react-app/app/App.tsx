@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import { Plus, Settings, Wallet, CreditCard, ArrowLeftRight } from 'lucide-react';
+import { AuthProvider, useAuth } from './AuthContext';
 import { AppProvider } from './AppContext';
 import { HomePage } from '../pages/home/HomePage';
 import { AccountsPage } from '../pages/accounts/AccountsPage';
 import { SettingsPage } from '../pages/settings/SettingsPage';
+import { LoginPage } from '../pages/login/LoginPage';
 import { TransactionForm } from '../features/transaction-form/TransactionForm';
 import { TransferForm } from '../features/transfer-form/TransferForm';
 
@@ -111,10 +113,28 @@ const AddMenu: React.FC<{
 };
 
 const AppContent: React.FC = () => {
+  const { isAuthenticated, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showTransferForm, setShowTransferForm] = useState(false);
+  
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <p className="text-gray-600">載入中...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Show login page if not authenticated
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
   
   const handleAddClick = () => {
     setShowAddMenu(true);
@@ -171,8 +191,10 @@ const AppContent: React.FC = () => {
 
 export const App: React.FC = () => {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </AuthProvider>
   );
 };

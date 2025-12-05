@@ -9,6 +9,8 @@ const STORAGE_KEYS = {
   TAGS: 'cloudbudget_tags',
   MERCHANTS: 'cloudbudget_merchants',
   LAST_SYNC: 'cloudbudget_last_sync',
+  AUTH_TOKEN: 'cloudbudget_auth_token',
+  USER_INFO: 'cloudbudget_user_info',
 };
 
 export const storage = {
@@ -76,5 +78,31 @@ export const storage = {
     Object.values(STORAGE_KEYS).forEach(key => {
       localStorage.removeItem(key);
     });
+  },
+  
+  // Authentication
+  getAuthToken: (): string | null => {
+    return localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+  },
+  
+  setAuthToken: (token: string): void => {
+    localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+  },
+  
+  removeAuthToken: (): void => {
+    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+  },
+  
+  getUserInfo: (): { name: string; email: string; picture: string } | null => {
+    const data = localStorage.getItem(STORAGE_KEYS.USER_INFO);
+    return data ? JSON.parse(data) : null;
+  },
+  
+  setUserInfo: (userInfo: { name: string; email: string; picture: string }): void => {
+    localStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify(userInfo));
+  },
+  
+  removeUserInfo: (): void => {
+    localStorage.removeItem(STORAGE_KEYS.USER_INFO);
   },
 };

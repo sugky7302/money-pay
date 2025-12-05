@@ -1,14 +1,16 @@
 // Settings Page
 
 import React, { useState } from 'react';
-import { Cloud, Check, AlertCircle, Plus, Tag, Store, FolderPlus } from 'lucide-react';
+import { Cloud, Check, AlertCircle, Plus, Tag, Store, FolderPlus, LogOut, User } from 'lucide-react';
 import { useAppContext } from '../../app/AppContext';
+import { useAuth } from '../../app/AuthContext';
 import { CategoryForm } from '../../features/category-form/CategoryForm';
 import { TagForm } from '../../features/tag-form/TagForm';
 import { MerchantForm } from '../../features/merchant-form/MerchantForm';
 
 export const SettingsPage: React.FC = () => {
   const { syncData, clearAllData, lastSyncTime, categories, tags, merchants } = useAppContext();
+  const { logout, userInfo } = useAuth();
   const [isSyncing, setIsSyncing] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showTagModal, setShowTagModal] = useState(false);
@@ -27,11 +29,53 @@ export const SettingsPage: React.FC = () => {
     }
   };
   
+  const handleLogout = () => {
+    if (window.confirm("確定要登出嗎？")) {
+      logout();
+    }
+  };
+  
   return (
     <div className="pb-24 pt-12 px-6">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">設定</h1>
       
       <div className="space-y-6">
+        {userInfo && (
+          <section>
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 ml-2">
+              帳戶資訊
+            </h3>
+            <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+              <div className="p-4 flex items-center justify-between border-b border-gray-50">
+                <div className="flex items-center gap-3">
+                  {userInfo.picture ? (
+                    <img 
+                      src={userInfo.picture} 
+                      alt={userInfo.name}
+                      className="w-10 h-10 rounded-full"
+                    />
+                  ) : (
+                    <div className="bg-blue-50 p-2 rounded-full text-blue-600">
+                      <User size={24} />
+                    </div>
+                  )}
+                  <div>
+                    <h4 className="font-medium text-gray-800">{userInfo.name}</h4>
+                    <p className="text-xs text-gray-500">{userInfo.email}</p>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-full p-4 flex items-center justify-center gap-2 text-red-600 font-medium text-sm hover:bg-red-50 transition-colors"
+              >
+                <LogOut size={18} />
+                登出帳號
+              </button>
+            </div>
+          </section>
+        )}
+        
         <section>
           <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 ml-2">
             資料管理
