@@ -115,6 +115,7 @@ const AppContent: React.FC = () => {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showTransferForm, setShowTransferForm] = useState(false);
+  const [isManagementModalOpen, setIsManagementModalOpen] = useState(false);
   
   const handleAddClick = () => {
     setShowAddMenu(true);
@@ -138,14 +139,16 @@ const AppContent: React.FC = () => {
         <div className="flex-1 overflow-y-auto no-scrollbar">
           {activeTab === 'home' && <HomePage />}
           {activeTab === 'accounts' && <AccountsPage />}
-          {activeTab === 'settings' && <SettingsPage />}
+          {activeTab === 'settings' && <SettingsPage setIsManagementModalOpen={setIsManagementModalOpen} />}
         </div>
         
-        <TabBar 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-          onAddClick={handleAddClick}
-        />
+        {!isManagementModalOpen && (
+          <TabBar 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab} 
+            onAddClick={handleAddClick}
+          />
+        )}
         
         <AddMenu
           isOpen={showAddMenu}

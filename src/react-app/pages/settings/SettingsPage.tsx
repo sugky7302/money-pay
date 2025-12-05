@@ -7,7 +7,7 @@ import { CategoryForm } from '../../features/category-form/CategoryForm';
 import { TagForm } from '../../features/tag-form/TagForm';
 import { MerchantForm } from '../../features/merchant-form/MerchantForm';
 
-export const SettingsPage: React.FC = () => {
+export const SettingsPage: React.FC<{ setIsManagementModalOpen: (isOpen: boolean) => void }> = ({ setIsManagementModalOpen }) => {
   const { syncData, clearAllData, lastSyncTime, categories, tags, merchants } = useAppContext();
   const [isSyncing, setIsSyncing] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -38,7 +38,10 @@ export const SettingsPage: React.FC = () => {
           </h3>
           <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
             <button
-              onClick={() => setShowCategoryModal(true)}
+              onClick={() => {
+                setShowCategoryModal(true);
+                setIsManagementModalOpen(true);
+              }}
               className="w-full p-4 flex items-center justify-between border-b border-gray-50 hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-center gap-3">
@@ -54,7 +57,10 @@ export const SettingsPage: React.FC = () => {
             </button>
             
             <button
-              onClick={() => setShowTagModal(true)}
+              onClick={() => {
+                setShowTagModal(true);
+                setIsManagementModalOpen(true);
+              }}
               className="w-full p-4 flex items-center justify-between border-b border-gray-50 hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-center gap-3">
@@ -70,7 +76,10 @@ export const SettingsPage: React.FC = () => {
             </button>
             
             <button
-              onClick={() => setShowMerchantModal(true)}
+              onClick={() => {
+                setShowMerchantModal(true);
+                setIsManagementModalOpen(true);
+              }}
               className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-center gap-3">
@@ -159,17 +168,26 @@ export const SettingsPage: React.FC = () => {
       
       <CategoryForm 
         isOpen={showCategoryModal}
-        onClose={() => setShowCategoryModal(false)}
+        onClose={() => {
+          setShowCategoryModal(false);
+          setIsManagementModalOpen(false);
+        }}
       />
       
       <TagForm 
         isOpen={showTagModal}
-        onClose={() => setShowTagModal(false)}
+        onClose={() => {
+          setShowTagModal(false);
+          setIsManagementModalOpen(false);
+        }}
       />
       
       <MerchantForm 
         isOpen={showMerchantModal}
-        onClose={() => setShowMerchantModal(false)}
+        onClose={() => {
+          setShowMerchantModal(false);
+          setIsManagementModalOpen(false);
+        }}
       />
     </div>
   );
