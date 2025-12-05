@@ -3,6 +3,7 @@
 import { Wallet } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../app/AuthContext";
+import { useConfig } from "../../shared/lib";
 
 declare global {
   interface Window {
@@ -30,13 +31,12 @@ declare global {
   }
 }
 
-// Google Client ID - In production, this should be configured via environment variables
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
   const [configError, setConfigError] = useState<string | null>(null);
+  const { config } = useConfig();
 
   const handleGoogleSignIn = useCallback(
     (response: { credential: string }) => {
@@ -87,7 +87,7 @@ export const LoginPage: React.FC = () => {
     // Load Google Sign-In script
     const loadGoogleScript = () => {
       // Check if Google Client ID is configured
-      if (!GOOGLE_CLIENT_ID) {
+      if (!config?.googleClientId) {
         setConfigError(
           "Google Client ID 未設定。請參考 GOOGLE_OAUTH_SETUP.md 文件進行設定。"
         );
@@ -112,8 +112,8 @@ export const LoginPage: React.FC = () => {
 
   useEffect(() => {
     if (isGoogleLoaded && window.google) {
-      // Double-check GOOGLE_CLIENT_ID is available before initializing
-      if (!GOOGLE_CLIENT_ID) {
+      // Double-check config?.googleClientId is available before initializing
+      if (!config?.googleClientId) {
         setConfigError(
           "Google Client ID 未設定。請參考 GOOGLE_OAUTH_SETUP.md 文件進行設定。"
         );
@@ -123,7 +123,7 @@ export const LoginPage: React.FC = () => {
       try {
         // Initialize Google Sign-In
         window.google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
+          client_id: config.googleClientId,
           callback: handleGoogleSignIn,
         });
 
