@@ -80,17 +80,24 @@ export const HomePage: React.FC = () => {
     return Array.from(categorySet).sort();
   }, [transactions]);
 
+  // 取得包含和排除的類型（共用邏輯）
+  const { includeTypes, excludeTypes } = useMemo(() => {
+    const types = Object.keys(filterTypeStates) as TransactionType[];
+    return {
+      includeTypes: types.filter(type => filterTypeStates[type] === 'include'),
+      excludeTypes: types.filter(type => filterTypeStates[type] === 'exclude'),
+    };
+  }, [filterTypeStates]);
+
   // 檢查是否有啟用篩選
   const hasActiveFilter = Object.values(filterTypeStates).some(state => state !== 'none') || filterCategory !== 'all';
 
   // 清除篩選
   const clearFilters = () => {
-    setFilterTypeStates({
-      expense: 'none',
-      income: 'none',
-      transfer: 'none',
-      adjustment: 'none',
-    });
+    const allTypes = Object.keys(TYPE_LABELS) as TransactionType[];
+    setFilterTypeStates(
+      Object.fromEntries(allTypes.map(type => [type, 'none'])) as Record<TransactionType, FilterState>
+    );
     setFilterCategory('all');
   };
 
@@ -98,13 +105,7 @@ export const HomePage: React.FC = () => {
   const displayedTransactions = useMemo(() => {
     let sourceTransactions = isSearchActive ? filteredTransactions : transactions;
     
-    // 套用類型篩選
-    const includeTypes = (Object.keys(filterTypeStates) as TransactionType[])
-      .filter(type => filterTypeStates[type] === 'include');
-    const excludeTypes = (Object.keys(filterTypeStates) as TransactionType[])
-      .filter(type => filterTypeStates[type] === 'exclude');
-    
-    // 如果有 include 篩選，只顯示這些類型
+    // 套用類型篩選：如果有 include 篩選，只顯示這些類型
     if (includeTypes.length > 0) {
       sourceTransactions = sourceTransactions.filter(t => includeTypes.includes(t.type));
     }
@@ -131,16 +132,11 @@ export const HomePage: React.FC = () => {
       return sorted;
     }
     return sorted.slice(0, displayLimit);
-  }, [isSearchActive, filteredTransactions, transactions, sortOrder, displayLimit, filterTypeStates, filterCategory]);
+  }, [isSearchActive, filteredTransactions, transactions, sortOrder, displayLimit, includeTypes, excludeTypes, filterCategory]);
 
   // 篩選後的總數
   const filteredCount = useMemo(() => {
     let source = isSearchActive ? filteredTransactions : transactions;
-    
-    const includeTypes = (Object.keys(filterTypeStates) as TransactionType[])
-      .filter(type => filterTypeStates[type] === 'include');
-    const excludeTypes = (Object.keys(filterTypeStates) as TransactionType[])
-      .filter(type => filterTypeStates[type] === 'exclude');
     
     if (includeTypes.length > 0) {
       source = source.filter(t => includeTypes.includes(t.type));
@@ -154,7 +150,7 @@ export const HomePage: React.FC = () => {
       source = source.filter(t => t.category === filterCategory);
     }
     return source.length;
-  }, [isSearchActive, filteredTransactions, transactions, filterTypeStates, filterCategory]);
+  }, [isSearchActive, filteredTransactions, transactions, includeTypes, excludeTypes, filterCategory]);
 
   const totalCount = isSearchActive ? filteredTransactions.length : transactions.length;
   
