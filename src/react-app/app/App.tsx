@@ -120,6 +120,7 @@ const AppContent: React.FC = () => {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showTransferForm, setShowTransferForm] = useState(false);
+  const [isManagementModalOpen, setIsManagementModalOpen] = useState(false);
   
   const handleAddClick = () => {
     setShowAddMenu(true);
@@ -144,14 +145,16 @@ const AppContent: React.FC = () => {
           {activeTab === 'home' && <HomePage />}
           {activeTab === 'accounts' && <AccountsPage />}
           {activeTab === 'reports' && <ReportsPage />}
-          {activeTab === 'settings' && <SettingsPage />}
+          {activeTab === 'settings' && <SettingsPage setIsManagementModalOpen={setIsManagementModalOpen} />}
         </div>
         
-        <TabBar 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-          onAddClick={handleAddClick}
-        />
+        {!isManagementModalOpen && (
+          <TabBar 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab} 
+            onAddClick={handleAddClick}
+          />
+        )}
         
         <AddMenu
           isOpen={showAddMenu}
