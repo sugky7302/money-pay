@@ -7,8 +7,10 @@ import { useAuth } from '../../app/AuthContext';
 import { CategoryForm } from '../../features/category-form/CategoryForm';
 import { MerchantForm } from '../../features/merchant-form/MerchantForm';
 import { TagForm } from '../../features/tag-form/TagForm';
+import { useUIStore } from '../../shared/stores/useUIStore';
 
-export const SettingsPage: React.FC<{ setIsManagementModalOpen: (isOpen: boolean) => void }> = ({ setIsManagementModalOpen }) => {
+export const SettingsPage: React.FC = () => {
+  const { setManagementModalOpen } = useUIStore();
   const { syncToCloud, loadFromCloud, downloadBackup, clearAllData, lastSyncTime, categories, tags, merchants, isSyncing, autoSyncEnabled, toggleAutoSync } = useAppContext();
   const { logout, userInfo } = useAuth();
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -87,7 +89,7 @@ export const SettingsPage: React.FC<{ setIsManagementModalOpen: (isOpen: boolean
             <button
               onClick={() => {
                 setShowCategoryModal(true);
-                setIsManagementModalOpen(true);
+                setManagementModalOpen(true);
               }}
               className="w-full p-4 flex items-center justify-between border-b border-gray-50 hover:bg-gray-50 transition-colors"
             >
@@ -106,7 +108,7 @@ export const SettingsPage: React.FC<{ setIsManagementModalOpen: (isOpen: boolean
             <button
               onClick={() => {
                 setShowTagModal(true);
-                setIsManagementModalOpen(true);
+                setManagementModalOpen(true);
               }}
               className="w-full p-4 flex items-center justify-between border-b border-gray-50 hover:bg-gray-50 transition-colors"
             >
@@ -125,7 +127,7 @@ export const SettingsPage: React.FC<{ setIsManagementModalOpen: (isOpen: boolean
             <button
               onClick={() => {
                 setShowMerchantModal(true);
-                setIsManagementModalOpen(true);
+                setManagementModalOpen(true);
               }}
               className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
             >
@@ -267,7 +269,7 @@ export const SettingsPage: React.FC<{ setIsManagementModalOpen: (isOpen: boolean
         isOpen={showCategoryModal}
         onClose={() => {
           setShowCategoryModal(false);
-          setIsManagementModalOpen(false);
+          setManagementModalOpen(false);
         }}
       />
       
@@ -275,7 +277,7 @@ export const SettingsPage: React.FC<{ setIsManagementModalOpen: (isOpen: boolean
         isOpen={showTagModal}
         onClose={() => {
           setShowTagModal(false);
-          setIsManagementModalOpen(false);
+          setManagementModalOpen(false);
         }}
       />
       
@@ -283,7 +285,7 @@ export const SettingsPage: React.FC<{ setIsManagementModalOpen: (isOpen: boolean
         isOpen={showMerchantModal}
         onClose={() => {
           setShowMerchantModal(false);
-          setIsManagementModalOpen(false);
+          setManagementModalOpen(false);
         }}
       />
     </div>

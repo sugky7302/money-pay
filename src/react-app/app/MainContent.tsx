@@ -9,6 +9,7 @@ import { AddMenu } from "../pages/home/ui/AddMenu";
 import { Tab, TabBar } from "../pages/home/ui/TabBar";
 import { ReportsPage } from "../pages/reports/ReportsPage";
 import { SettingsPage } from "../pages/settings/SettingsPage";
+import { useUIStore } from "../shared/stores/useUIStore";
 
 // Page registry - easy to add new pages
 const PAGES = {
@@ -22,13 +23,13 @@ export const MainContent: React.FC = () => {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showTransferForm, setShowTransferForm] = useState(false);
-  const [isManagementModalOpen, setIsManagementModalOpen] = useState(false);
+  const { isSearchModalOpen, isManagementModalOpen } = useUIStore();
 
   // Render active page
   const renderPage = () => {
-    // Settings page needs special props
+    // Settings page is handled separately in PAGES now
     if (activeTab === "settings") {
-      return <SettingsPage setIsManagementModalOpen={setIsManagementModalOpen} />;
+      return <SettingsPage />;
     }
 
     const PageComponent = PAGES[activeTab as keyof typeof PAGES];
@@ -58,7 +59,7 @@ export const MainContent: React.FC = () => {
           {renderPage()}
         </div>
 
-        {!isManagementModalOpen && (
+        {!isManagementModalOpen && !isSearchModalOpen && (
           <TabBar
             activeTab={activeTab}
             setActiveTab={setActiveTab}

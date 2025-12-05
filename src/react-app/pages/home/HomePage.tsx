@@ -5,6 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
 import { Search } from '../../features/search/Search';
 import { TransactionForm } from '../../features/transaction-form/TransactionForm';
+import { useUIStore } from '../../shared/stores/useUIStore';
 import { Transaction, TransactionType } from '../../shared/types';
 import { BalanceCard } from '../../widgets/balance-card/BalanceCard';
 import { TransactionList } from '../../widgets/transaction-list/TransactionList';
@@ -20,9 +21,9 @@ const TYPE_LABELS: Record<TransactionType, string> = {
 };
 
 export const HomePage: React.FC = () => {
-  const { transactions, categories, lastSyncTime, syncToCloud, isSyncing } = useAppContext();
+  const { transactions, lastSyncTime, syncToCloud, isSyncing } = useAppContext();
+  const { isSearchModalOpen, setSearchModalOpen } = useUIStore();
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showSearchModal, setShowSearchModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>();
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
   const [isSearchActive, setIsSearchActive] = useState(false);
@@ -120,7 +121,7 @@ export const HomePage: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">我的資產</h1>
           <div className="flex gap-2">
             <button 
-              onClick={() => setShowSearchModal(true)}
+              onClick={() => setSearchModalOpen(true)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-white text-gray-500 shadow-sm hover:text-blue-500 transition-all"
             >
               <SearchIcon size={14}/>
@@ -341,8 +342,8 @@ export const HomePage: React.FC = () => {
       />
       
       <Search
-        isOpen={showSearchModal}
-        onClose={() => setShowSearchModal(false)}
+        isOpen={isSearchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
         onSearch={handleSearch}
       />
     </div>
