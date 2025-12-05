@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
 import { generateId, getCurrentDate } from '../../shared/lib/utils';
-import { Transaction } from '../../shared/types';
+import { Transaction, Category, Merchant, Tag } from '../../shared/types';
 import { Button } from '../../shared/ui/Button';
 import { Input } from '../../shared/ui/Input';
+import { InputSelect } from '../../shared/ui/InputSelect';
 import { Modal } from '../../shared/ui/Modal';
 import { Select } from '../../shared/ui/Select';
 
@@ -22,7 +23,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   transaction,
   mode = 'add'
 }) => {
-  const { categories, accounts, merchants, tags, addTransaction, updateTransaction } = useAppContext();
+  const { categories, accounts, merchants, tags, addTransaction, updateTransaction, addCategory, addMerchant, addTag } = useAppContext();
   
   const [formData, setFormData] = useState<Partial<Transaction>>({
     type: 'expense',
@@ -67,19 +68,40 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     });
   };
 
-  const handleTagToggle = (tagName: string) => {
-    const currentTags = formData.tags || [];
-    if (currentTags.includes(tagName)) {
-      setFormData({
-        ...formData,
-        tags: currentTags.filter(t => t !== tagName),
-      });
-    } else {
-      setFormData({
-        ...formData,
-        tags: [...currentTags, tagName],
-      });
+  const handleCreateCategory = (name: string) => {
+    const newCategory: Category = {
+      id: generateId(),
+      name,
+      type: formData.type as 'expense' | 'income',
+    };
+    addCategory(newCategory);
+    setFormData({ ...formData, category: name });
+  };
+
+  const handleCreateMerchant = (name: string) => {
+    const newMerchant: Merchant = {
+      id: generateId(),
+      name,
+    };
+    addMerchant(newMerchant);
+    setFormData({ ...formData, merchant: name });
+  };
+
+  const handleCreateTag = (name: string) => {
+    if (tags.some(tag => tag.name.toLowerCase() === name.toLowerCase())) {
+      if (!formData.tags?.includes(name)) {
+        setFormData({ ...formData, tags: [...(formData.tags || []), name] });
+      }
+      return;
     }
+    const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'];
+    const newTag: Tag = {
+      id: generateId(),
+      name,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    };
+    addTag(newTag);
+    setFormData({ ...formData, tags: [...(formData.tags || []), name] });
   };
   
   const handleSubmit = () => {
@@ -109,7 +131,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   const categoryOptions = currentCategories.map(c => ({ value: c.name, label: c.name }));
   const accountOptions = accounts.map(a => ({ value: a.name, label: a.name }));
   const merchantOptions = merchants.map(m => ({ value: m.name, label: m.name }));
-  
+  const tagOptions = tags.map(t => ({ value: t.name, label: t.name }));
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={mode === 'add' ? '新增交易' : '編輯交易'}>
       <div className="flex bg-gray-200 rounded-lg p-1 mb-6">
@@ -149,14 +172,14 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          {categoryOptions.length > 0 && (
-            <Select
-              label="分類"
-              options={categoryOptions}
-              value={formData.category}
-              onChange={(e) => setFormData({...formData, category: e.target.value})}
-            />
-          )}
+          <InputSelect
+            label="分類"
+            options={categoryOptions}
+            value={formData.category}
+            onChange={(value) => setFormData({ ...formData, category: value as string })}
+            onCreate={handleCreateCategory}
+            placeholder="選擇或新增分類"
+          />
           <Input
             type="date"
             label="日期"
@@ -174,14 +197,14 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           />
         )}
 
-        {merchantOptions.length > 0 && (
-          <Select
-            label="商家（選填）"
-            options={[{ value: '', label: '不指定' }, ...merchantOptions]}
-            value={formData.merchant}
-            onChange={(e) => setFormData({...formData, merchant: e.target.value})}
-          />
-        )}
+        <InputSelect
+          label="商家（選填）"
+          options={merchantOptions}
+          value={formData.merchant}
+          onChange={(value) => setFormData({ ...formData, merchant: value as string })}
+          onCreate={handleCreateMerchant}
+          placeholder="選擇或新增商家"
+        />
 
         <Input
           type="text"
@@ -191,33 +214,15 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           placeholder="例如：午餐"
         />
 
-        {tags.length > 0 && (
-          <div>
-            <label className="text-xs text-gray-500 font-medium ml-1 mb-2 block">
-              標籤（選填）
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => {
-                const isSelected = formData.tags?.includes(tag.name);
-                return (
-                  <button
-                    key={tag.id}
-                    type="button"
-                    onClick={() => handleTagToggle(tag.name)}
-                    className={`px-3 py-1.5 rounded-full text-sm transition-all ${
-                      isSelected
-                        ? 'text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                    style={isSelected ? { backgroundColor: tag.color } : undefined}
-                  >
-                    {tag.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        <InputSelect
+          label="標籤（選填）"
+          options={tagOptions}
+          value={formData.tags}
+          onChange={(values) => setFormData({ ...formData, tags: values as string[] })}
+          onCreate={handleCreateTag}
+          placeholder="選擇或新增標籤"
+          multiple
+        />
 
         <Button 
           onClick={handleSubmit}
