@@ -242,13 +242,14 @@ class GoogleSheetsService {
     await this.writeSheet(spreadsheetId, SHEET_NAMES.transactions, transactionHeaders, transactionRows);
 
     // Save accounts
-    const accountHeaders = ['id', 'name', 'type', 'balance', 'currency', 'icon', 'color'];
+    const accountHeaders = ['id', 'name', 'type', 'balance', 'currency', 'isVirtual', 'icon', 'color'];
     const accountRows = data.accounts.map(a => [
       a.id,
       a.name,
       a.type,
       a.balance,
       a.currency,
+      a.isVirtual ? 'true' : 'false',
       a.icon || '',
       a.color || '',
     ]);
@@ -372,14 +373,20 @@ class GoogleSheetsService {
       const accountData = await this.readSheet(spreadsheetId, SHEET_NAMES.accounts);
       const accHeaders = accountData[0] || [];
       const accGet = this.createRowMapper(accHeaders);
+      const parseBoolean = (value: string | undefined): boolean => {
+        if (!value) return false;
+        const normalized = value.trim().toLowerCase();
+        return normalized === 'true' || normalized === '1' || normalized === 'yes';
+      };
       const accounts: Account[] = accountData.slice(1).map(row => ({
         id: safeNumber(accGet(row, 'id') || row[0], Date.now()),
         name: accGet(row, 'name') || row[1] || '未命名帳戶',
         type: (accGet(row, 'type') || row[2] || 'cash') as Account['type'],
         balance: safeNumber(accGet(row, 'balance') || row[3], 0),
         currency: accGet(row, 'currency') || 'TWD',
+        isVirtual: parseBoolean(accGet(row, 'isVirtual') || row[5]),
         icon: accGet(row, 'icon') || undefined,
-        color: accGet(row, 'color') || row[6] || undefined,
+        color: accGet(row, 'color') || row[7] || row[6] || undefined,
       }));
 
       // Read categories

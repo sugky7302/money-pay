@@ -68,6 +68,7 @@ export const calculateTotalBalance = (
   transactions: Transaction[]
 ): number => {
   return accounts.reduce((total, account) => {
+    if (account.isVirtual) return total;
     return total + calculateAccountBalance(account, transactions);
   }, 0);
 };

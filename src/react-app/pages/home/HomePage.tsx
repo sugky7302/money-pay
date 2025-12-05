@@ -248,7 +248,7 @@ export const HomePage: React.FC = () => {
                     className="fixed inset-0 z-10" 
                     onClick={() => setShowFilterMenu(false)} 
                   />
-                  <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-100 p-3 z-20 min-w-[200px]">
+                  <div className="absolute left-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-100 p-3 z-20 min-w-[200px]">
                     {/* 類型篩選 */}
                     <div className="mb-3">
                       <label className="text-xs font-medium text-gray-500 mb-1.5 block">交易類型</label>

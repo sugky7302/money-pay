@@ -47,6 +47,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
     type: 'cash',
     balance: 0,
     currency: 'TWD',
+    isVirtual: false,
     color: COLORS[0],
   });
   
@@ -56,6 +57,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
         setFormData({
           ...account,
           currency: account.currency || 'TWD', // 相容舊資料
+          isVirtual: Boolean(account.isVirtual),
         });
       } else {
         setFormData({
@@ -63,6 +65,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
           type: 'cash',
           balance: 0,
           currency: 'TWD',
+          isVirtual: false,
           color: COLORS[0],
         });
       }
@@ -84,6 +87,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
         type: formData.type as Account['type'],
         balance: Number(formData.balance) || 0,
         currency: formData.currency || 'TWD',
+        isVirtual: Boolean(formData.isVirtual),
         color: formData.color,
       };
       addAccount(newAccount);
@@ -127,6 +131,19 @@ export const AccountForm: React.FC<AccountFormProps> = ({
           onChange={(e) => setFormData({...formData, balance: Number(e.target.value)})}
           placeholder="0"
         />
+        
+        <label className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            checked={Boolean(formData.isVirtual)}
+            onChange={(e) => setFormData({ ...formData, isVirtual: e.target.checked })}
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <div>
+            <p className="font-medium">虛擬帳戶</p>
+            <p className="text-xs text-gray-500">僅做記錄，不列入總資產</p>
+          </div>
+        </label>
         
         <div>
           <label className="text-xs text-gray-500 font-medium ml-1 mb-2 block">

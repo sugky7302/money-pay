@@ -32,6 +32,7 @@ export interface Account {
   type: 'bank' | 'cash' | 'e-wallet' | 'credit-card' | 'other';
   balance: number;
   currency: string; // Currency code, e.g. 'TWD'
+  isVirtual?: boolean; // Virtual accounts are excluded from total assets
   icon?: string;
   color?: string;
 }
