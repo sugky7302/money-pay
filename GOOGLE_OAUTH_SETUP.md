@@ -99,6 +99,30 @@
 4. 監控 Google Cloud Console 中的 API 使用情況
 5. 如果 Client ID 洩漏，立即在 Google Cloud Console 中撤銷並建立新的
 
+### 重要：JWT Token 驗證
+
+目前的實作僅在前端解析 JWT token 以顯示使用者資訊。這適用於基本的身份識別和 UI 顯示。
+
+**生產環境建議**：
+- 對於任何安全敏感的操作（如存取受保護的資源、API 呼叫等），應該在後端伺服器上驗證 JWT token
+- 使用 Google 的 token verification library 或呼叫 Google 的 tokeninfo endpoint 進行驗證
+- 不要完全信任前端解析的 JWT payload
+
+範例後端驗證（使用 Node.js）：
+```javascript
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+
+async function verifyToken(token) {
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: GOOGLE_CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+  return payload;
+}
+```
+
 ## 疑難排解
 
 ### 問題：看不到 Google 登入按鈕

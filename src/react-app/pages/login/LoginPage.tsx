@@ -31,15 +31,18 @@ declare global {
 }
 
 // Google Client ID - In production, this should be configured via environment variables
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
+  const [configError, setConfigError] = useState<string | null>(null);
 
   const handleGoogleSignIn = useCallback((response: { credential: string }) => {
     try {
       // Decode the JWT token to get user info
+      // Note: This is only for display purposes. The token should be validated
+      // on the server side for any security-sensitive operations.
       const token = response.credential;
       const payload = JSON.parse(atob(token.split('.')[1]));
       
@@ -60,12 +63,21 @@ export const LoginPage: React.FC = () => {
   useEffect(() => {
     // Load Google Sign-In script
     const loadGoogleScript = () => {
+      // Check if Google Client ID is configured
+      if (!GOOGLE_CLIENT_ID) {
+        setConfigError('Google Client ID 未設定。請參考 GOOGLE_OAUTH_SETUP.md 文件進行設定。');
+        return;
+      }
+
       const script = document.createElement('script');
       script.src = 'https://accounts.google.com/gsi/client';
       script.async = true;
       script.defer = true;
       script.onload = () => {
         setIsGoogleLoaded(true);
+      };
+      script.onerror = () => {
+        setConfigError('無法載入 Google 登入服務，請檢查網路連線。');
       };
       document.body.appendChild(script);
     };
@@ -93,8 +105,9 @@ export const LoginPage: React.FC = () => {
         });
       }
 
-      // Also show the One Tap prompt
-      window.google.accounts.id.prompt();
+      // Show the One Tap prompt only on initial load for better UX
+      // This can be commented out if the behavior is too intrusive
+      // window.google.accounts.id.prompt();
     }
   }, [isGoogleLoaded, handleGoogleSignIn]);
 
@@ -116,13 +129,24 @@ export const LoginPage: React.FC = () => {
           </div>
 
           <div className="flex flex-col items-center space-y-4">
-            <div id="googleSignInButton" className="w-full flex justify-center"></div>
-            
-            {!isGoogleLoaded && (
-              <div className="flex items-center justify-center space-x-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-                <span className="text-gray-500 text-sm">載入中...</span>
+            {configError ? (
+              <div className="w-full p-4 bg-red-50 border border-red-200 rounded-xl">
+                <p className="text-red-700 text-sm text-center">{configError}</p>
+                <p className="text-red-600 text-xs text-center mt-2">
+                  請聯絡系統管理員或參考 GOOGLE_OAUTH_SETUP.md 文件
+                </p>
               </div>
+            ) : (
+              <>
+                <div id="googleSignInButton" className="w-full flex justify-center"></div>
+                
+                {!isGoogleLoaded && (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                    <span className="text-gray-500 text-sm">載入中...</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
