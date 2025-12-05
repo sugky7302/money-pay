@@ -1,11 +1,11 @@
 // Tab Bar Component
 
 import {
-    BarChart3,
-    CreditCard,
-    Plus,
-    Settings,
-    Wallet,
+  BarChart3,
+  CreditCard,
+  Plus,
+  Settings,
+  Wallet,
 } from "lucide-react";
 import React from "react";
 
@@ -46,7 +46,7 @@ export const TabBar: React.FC<TabBarProps> = ({
 
       <button
         onClick={onAddClick}
-        className="bg-blue-500 text-white p-4 rounded-full shadow-lg transform -translate-y-4 hover:bg-blue-600 transition-colors active:scale-95 justify-self-center"
+        className="bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-600 transition-colors active:scale-95 justify-self-center"
       >
         <Plus size={28} />
       </button>
