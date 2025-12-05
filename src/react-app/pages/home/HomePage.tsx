@@ -20,7 +20,7 @@ const TYPE_LABELS: Record<TransactionType, string> = {
 };
 
 export const HomePage: React.FC = () => {
-  const { transactions, lastSyncTime, syncToCloud, isSyncing } = useAppContext();
+  const { transactions, categories, lastSyncTime, syncToCloud, isSyncing } = useAppContext();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>();
@@ -154,22 +154,89 @@ export const HomePage: React.FC = () => {
           </h3>
           <div className="flex items-center gap-2">
             {/* Filter Button */}
-            <button
-              onClick={() => setShowFilterMenu(!showFilterMenu)}
-              className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors ${
-                hasActiveFilter 
-                  ? 'bg-blue-100 text-blue-600' 
-                  : 'text-gray-500 bg-gray-100 hover:bg-gray-200'
-              }`}
-            >
-              <Filter size={12} />
-              篩選
-              {hasActiveFilter && (
-                <span className="bg-blue-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center">
-                  {(filterType !== 'all' ? 1 : 0) + (filterCategory !== 'all' ? 1 : 0)}
-                </span>
+            <div className="relative">
+              <button
+                onClick={() => setShowFilterMenu(!showFilterMenu)}
+                className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors ${
+                  hasActiveFilter 
+                    ? 'bg-blue-100 text-blue-600' 
+                    : 'text-gray-500 bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                <Filter size={12} />
+                篩選
+                {hasActiveFilter && (
+                  <span className="bg-blue-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center">
+                    {(filterType !== 'all' ? 1 : 0) + (filterCategory !== 'all' ? 1 : 0)}
+                  </span>
+                )}
+              </button>
+              
+              {showFilterMenu && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-10" 
+                    onClick={() => setShowFilterMenu(false)} 
+                  />
+                  <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-100 p-3 z-20 min-w-[200px]">
+                    {/* 類型篩選 */}
+                    <div className="mb-3">
+                      <label className="text-xs font-medium text-gray-500 mb-1.5 block">交易類型</label>
+                      <div className="flex flex-wrap gap-1">
+                        <button
+                          onClick={() => setFilterType('all')}
+                          className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                            filterType === 'all' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          全部
+                        </button>
+                        {(Object.keys(TYPE_LABELS) as TransactionType[]).map(type => (
+                          <button
+                            key={type}
+                            onClick={() => setFilterType(type)}
+                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                              filterType === type ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                          >
+                            {TYPE_LABELS[type]}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* 類別篩選 */}
+                    <div className="mb-3">
+                      <label className="text-xs font-medium text-gray-500 mb-1.5 block">類別</label>
+                      <select
+                        value={filterCategory}
+                        onChange={(e) => setFilterCategory(e.target.value)}
+                        className="w-full px-2 py-1.5 text-xs rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="all">全部類別</option>
+                        {allCategories.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    {/* 清除篩選 */}
+                    {hasActiveFilter && (
+                      <button
+                        onClick={() => {
+                          clearFilters();
+                          setShowFilterMenu(false);
+                        }}
+                        className="w-full flex items-center justify-center gap-1 px-2 py-1.5 text-xs text-red-500 bg-red-50 rounded-md hover:bg-red-100 transition-colors"
+                      >
+                        <X size={12} />
+                        清除篩選
+                      </button>
+                    )}
+                  </div>
+                </>
               )}
-            </button>
+            </div>
 
             {/* Sort Button */}
             <button
@@ -278,86 +345,6 @@ export const HomePage: React.FC = () => {
         onClose={() => setShowSearchModal(false)}
         onSearch={handleSearch}
       />
-
-      {/* Filter Modal - 從底部滑出 */}
-      {showFilterMenu && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
-          <div 
-            className="absolute inset-0 bg-black/30" 
-            onClick={() => setShowFilterMenu(false)} 
-          />
-          <div className="relative bg-white rounded-t-3xl w-full max-w-lg p-6 pb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-gray-800">篩選交易</h3>
-              <button 
-                onClick={() => setShowFilterMenu(false)}
-                className="p-2 hover:bg-gray-100 rounded-full"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            
-            {/* 類型篩選 */}
-            <div className="mb-4">
-              <label className="text-sm font-medium text-gray-600 mb-2 block">交易類型</label>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setFilterType('all')}
-                  className={`px-3 py-2 text-sm rounded-xl transition-colors ${
-                    filterType === 'all' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  全部
-                </button>
-                {(Object.keys(TYPE_LABELS) as TransactionType[]).map(type => (
-                  <button
-                    key={type}
-                    onClick={() => setFilterType(type)}
-                    className={`px-3 py-2 text-sm rounded-xl transition-colors ${
-                      filterType === type ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {TYPE_LABELS[type]}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            {/* 類別篩選 */}
-            <div className="mb-6">
-              <label className="text-sm font-medium text-gray-600 mb-2 block">類別</label>
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="w-full px-4 py-3 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
-              >
-                <option value="all">全部類別</option>
-                {allCategories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-            
-            {/* 按鈕 */}
-            <div className="flex gap-3">
-              {hasActiveFilter && (
-                <button
-                  onClick={clearFilters}
-                  className="flex-1 py-3 text-sm text-red-500 bg-red-50 rounded-xl hover:bg-red-100 transition-colors"
-                >
-                  清除篩選
-                </button>
-              )}
-              <button
-                onClick={() => setShowFilterMenu(false)}
-                className="flex-1 py-3 text-sm text-white bg-blue-500 rounded-xl hover:bg-blue-600 transition-colors"
-              >
-                確認
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
