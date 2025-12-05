@@ -15,6 +15,7 @@ type DisplayLimit = 10 | 20 | 50 | 100 | 'all';
 
 const INITIAL_LOAD_COUNT = 20;
 const LOAD_MORE_COUNT = 20;
+const INFINITE_SCROLL_TRIGGER_LIMIT: DisplayLimit = 20;
 
 const TYPE_LABELS: Record<TransactionType, string> = {
   expense: '支出',
@@ -119,7 +120,7 @@ export const HomePage: React.FC = () => {
   // Sort and limit transactions
   const displayedTransactions = useMemo(() => {
     // 如果使用舊的顯示限制選項（非無限滾動），套用該限制
-    if (displayLimit !== 20) {
+    if (displayLimit !== INFINITE_SCROLL_TRIGGER_LIMIT) {
       if (displayLimit === 'all') {
         return sortedAndFilteredTransactions;
       }
@@ -137,7 +138,7 @@ export const HomePage: React.FC = () => {
 
   // 無限滾動：加載更多交易
   const loadMoreTransactions = useCallback(() => {
-    if (isLoadingMore || displayCount >= filteredCount || displayLimit !== 20) return;
+    if (isLoadingMore || displayCount >= filteredCount || displayLimit !== INFINITE_SCROLL_TRIGGER_LIMIT) return;
     
     setIsLoadingMore(true);
     // 模擬加載延遲
@@ -151,7 +152,7 @@ export const HomePage: React.FC = () => {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && displayLimit === 20) {
+        if (entries[0].isIntersecting && displayLimit === INFINITE_SCROLL_TRIGGER_LIMIT) {
           loadMoreTransactions();
         }
       },
@@ -327,8 +328,8 @@ export const HomePage: React.FC = () => {
                         onClick={() => {
                           setDisplayLimit(limit);
                           setShowLimitMenu(false);
-                          // 如果選擇 20 筆，重置為無限滾動模式
-                          if (limit === 20) {
+                          // 如果選擇無限滾動觸發限制，重置為無限滾動模式
+                          if (limit === INFINITE_SCROLL_TRIGGER_LIMIT) {
                             setDisplayCount(INITIAL_LOAD_COUNT);
                           }
                         }}
@@ -391,7 +392,7 @@ export const HomePage: React.FC = () => {
             />
             
             {/* Infinite Scroll: Loading Indicator and Observer Target */}
-            {displayLimit === 20 && displayCount < filteredCount && (
+            {displayLimit === INFINITE_SCROLL_TRIGGER_LIMIT && displayCount < filteredCount && (
               <div ref={observerTarget} className="py-4 flex justify-center">
                 <div className="flex items-center gap-2 text-gray-400 text-sm">
                   <Loader2 className="animate-spin" size={16} />
@@ -401,7 +402,7 @@ export const HomePage: React.FC = () => {
             )}
             
             {/* Show completion message when all items are loaded */}
-            {displayLimit === 20 && displayCount >= filteredCount && filteredCount > INITIAL_LOAD_COUNT && (
+            {displayLimit === INFINITE_SCROLL_TRIGGER_LIMIT && displayCount >= filteredCount && filteredCount > INITIAL_LOAD_COUNT && (
               <div className="py-4 text-center text-gray-400 text-sm">
                 已顯示全部 {filteredCount} 筆交易
               </div>
