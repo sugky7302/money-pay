@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
 import { generateId } from '../../shared/lib/utils';
-import { Account, Currency, CURRENCY_NAMES } from '../../shared/types';
+import { Account } from '../../shared/types';
 import { Button } from '../../shared/ui/Button';
 import { Input } from '../../shared/ui/Input';
 import { Modal } from '../../shared/ui/Modal';
@@ -24,11 +24,6 @@ const ACCOUNT_TYPES = [
   { value: 'other', label: '其他' },
 ];
 
-const CURRENCY_OPTIONS = (Object.keys(CURRENCY_NAMES) as Currency[]).map(code => ({
-  value: code,
-  label: `${CURRENCY_NAMES[code]} (${code})`,
-}));
-
 const COLORS = [
   '#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', 
   '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
@@ -40,7 +35,12 @@ export const AccountForm: React.FC<AccountFormProps> = ({
   account,
   mode = 'add'
 }) => {
-  const { addAccount, updateAccount } = useAppContext();
+  const { addAccount, updateAccount, currencies } = useAppContext();
+
+  const currencyOptions = currencies.map(c => ({
+    value: c.code,
+    label: `${c.name} (${c.code})`,
+  }));
   
   const [formData, setFormData] = useState<Partial<Account>>({
     name: '',
@@ -83,7 +83,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
         name: formData.name,
         type: formData.type as Account['type'],
         balance: Number(formData.balance) || 0,
-        currency: formData.currency as Currency || 'TWD',
+        currency: formData.currency || 'TWD',
         color: formData.color,
       };
       addAccount(newAccount);
@@ -115,9 +115,9 @@ export const AccountForm: React.FC<AccountFormProps> = ({
         
         <Select
           label="幣別"
-          options={CURRENCY_OPTIONS}
+          options={currencyOptions}
           value={formData.currency}
-          onChange={(e) => setFormData({...formData, currency: e.target.value as Currency})}
+          onChange={(e) => setFormData({...formData, currency: e.target.value})}
         />
         
         <Input

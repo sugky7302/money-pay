@@ -10,7 +10,7 @@ import React, {
   useState,
 } from "react";
 import { googleSheetsService, storage, useConfig } from "../shared/lib";
-import { Account, Category, Merchant, Tag, Transaction } from "../shared/types";
+import { Account, Category, Currency, Merchant, Tag, Transaction } from "../shared/types";
 
 interface AppContextType {
   // State
@@ -19,6 +19,7 @@ interface AppContextType {
   categories: Category[];
   tags: Tag[];
   merchants: Merchant[];
+  currencies: Currency[];
   lastSyncTime: string;
   isLoading: boolean;
   isSyncing: boolean;
@@ -42,6 +43,10 @@ interface AppContextType {
   addMerchant: (merchant: Merchant) => void;
   deleteMerchant: (id: number) => void;
 
+  addCurrency: (currency: Currency) => void;
+  updateCurrency: (currency: Currency) => void;
+  deleteCurrency: (id: number) => void;
+
   syncToCloud: () => Promise<void>;
   loadFromCloud: () => Promise<void>;
   downloadBackup: () => void;
@@ -60,6 +65,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const [tags, setTags] = useState<Tag[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
   const [merchants, setMerchants] = useState<Merchant[]>([]);
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [lastSyncTime, setLastSyncTime] = useState("尚未備份");
   const [isLoading, setIsLoading] = useState(true);
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
@@ -82,12 +88,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     categories: [] as Category[],
     tags: [] as Tag[],
     merchants: [] as Merchant[],
+    currencies: [] as Currency[],
   });
 
   // Update data ref when state changes
   useEffect(() => {
-    dataRef.current = { transactions, accounts, categories, tags, merchants };
-  }, [transactions, accounts, categories, tags, merchants]);
+    dataRef.current = { transactions, accounts, categories, tags, merchants, currencies };
+  }, [transactions, accounts, categories, tags, merchants, currencies]);
 
   // Silent sync function (no alerts, for auto-sync)
   const performAutoSync = useCallback(async () => {
@@ -162,6 +169,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       const savedCategories = storage.getCategories();
       const savedTags = storage.getTags();
       const savedMerchants = storage.getMerchants();
+      const savedCurrencies = storage.getCurrencies();
       const savedSyncTime = storage.getLastSync();
       const savedAutoSync = storage.getAutoSyncEnabled();
 
@@ -170,6 +178,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       setCategories(savedCategories);
       setTags(savedTags);
       setMerchants(savedMerchants);
+      setCurrencies(savedCurrencies);
       setLastSyncTime(savedSyncTime);
       setAutoSyncEnabled(savedAutoSync);
       setIsLoading(false);
@@ -230,6 +239,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [merchants, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      storage.setCurrencies(currencies);
+      scheduleAutoSync();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currencies, isLoading]);
 
   // Transaction actions
   const addTransaction = (transaction: Transaction) => {
@@ -300,6 +317,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     setMerchants((prevMerchants) => prevMerchants.filter((m) => m.id !== id));
   };
 
+  // Currency actions
+  const addCurrency = (currency: Currency) => {
+    setCurrencies([...currencies, currency]);
+  };
+
+  const updateCurrency = (updatedCurrency: Currency) => {
+    setCurrencies((prevCurrencies) =>
+      prevCurrencies.map((c) => (c.id === updatedCurrency.id ? updatedCurrency : c))
+    );
+  };
+
+  const deleteCurrency = (id: number) => {
+    setCurrencies((prevCurrencies) => prevCurrencies.filter((c) => c.id !== id));
+  };
+
   // Sync to Google Sheets
   const syncToCloud = async () => {
     setIsSyncing(true);
@@ -310,6 +342,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         categories,
         tags,
         merchants,
+        currencies,
         exportDate: new Date().toISOString(),
       };
 
@@ -347,6 +380,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         setCategories(data.categories);
         setTags(data.tags);
         setMerchants(data.merchants);
+        setCurrencies(data.currencies || []);
 
         // Update last sync time
         const now = new Date();
@@ -379,6 +413,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       categories,
       tags,
       merchants,
+      currencies,
       exportDate: new Date().toISOString(),
     };
 
@@ -404,6 +439,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     setCategories([]);
     setTags([]);
     setMerchants([]);
+    setCurrencies([]);
     setLastSyncTime("尚未備份");
   };
 
@@ -414,35 +450,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     storage.setAutoSyncEnabled(newValue);
   };
 
-  const value: AppContextType = {
-    transactions,
-    accounts,
-    categories,
-    tags,
-    merchants,
-    lastSyncTime,
-    isLoading,
-    isSyncing,
-    autoSyncEnabled,
-    addTransaction,
-    updateTransaction,
-    deleteTransaction,
-    addAccount,
-    updateAccount,
-    deleteAccount,
-    addCategory,
-    deleteCategory,
-    addTag,
-    deleteTag,
-    addMerchant,
-    deleteMerchant,
-    syncToCloud,
-    loadFromCloud,
-    downloadBackup,
-    clearAllData,
-    toggleAutoSync,
-  };
-
+    const value: AppContextType = {
+      transactions,
+      accounts,
+      categories,
+      tags,
+      merchants,
+      currencies,
+      lastSyncTime,
+      isLoading,
+      isSyncing,
+      autoSyncEnabled,
+      addTransaction,
+      updateTransaction,
+      deleteTransaction,
+      addAccount,
+      updateAccount,
+      deleteAccount,
+      addCategory,
+      deleteCategory,
+      addTag,
+      deleteTag,
+      addMerchant,
+      deleteMerchant,
+      addCurrency,
+      updateCurrency,
+      deleteCurrency,
+      syncToCloud,
+      loadFromCloud,
+      downloadBackup,
+      clearAllData,
+      toggleAutoSync,
+    };
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 

@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
 import { calculateAccountBalance, generateId, getCurrentDate } from '../../shared/lib/utils';
-import { CURRENCY_SYMBOLS, Transaction } from '../../shared/types';
+import { Transaction } from '../../shared/types';
 import { Button } from '../../shared/ui/Button';
 import { Input } from '../../shared/ui/Input';
 import { Modal } from '../../shared/ui/Modal';
@@ -15,7 +15,7 @@ interface TransferFormProps {
 }
 
 export const TransferForm: React.FC<TransferFormProps> = ({ isOpen, onClose }) => {
-  const { accounts, tags, transactions, addTransaction } = useAppContext();
+  const { accounts, tags, transactions, addTransaction, currencies } = useAppContext();
   
   const [formData, setFormData] = useState({
     fromAccount: accounts.length > 0 ? accounts[0].name : '',
@@ -109,12 +109,21 @@ export const TransferForm: React.FC<TransferFormProps> = ({ isOpen, onClose }) =
     value: a.name, 
     label: `${a.name} (${a.currency || 'TWD'})` 
   }));
+
+  // Create a map of currency code to symbol
+  const currencySymbols = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const currency of currencies) {
+      map[currency.code] = currency.symbol;
+    }
+    return map;
+  }, [currencies]);
   
   // Get currency symbols
   const fromCurrency = fromAccount?.currency || 'TWD';
   const toCurrency = toAccount?.currency || 'TWD';
-  const fromSymbol = CURRENCY_SYMBOLS[fromCurrency] || '$';
-  const toSymbol = CURRENCY_SYMBOLS[toCurrency] || '$';
+  const fromSymbol = currencySymbols[fromCurrency] || '$';
+  const toSymbol = currencySymbols[toCurrency] || '$';
   
   // Check if the from account has sufficient balance (including fee)
   const fromAccountBalance = fromAccount ? calculateAccountBalance(fromAccount, transactions) : 0;

@@ -1,6 +1,6 @@
 // Local storage management
 
-import { Account, Category, Merchant, Tag, Transaction } from '../types';
+import { Account, Category, Currency, Merchant, Tag, Transaction } from '../types';
 
 const STORAGE_KEYS = {
   TRANSACTIONS: 'cloudbudget_transactions',
@@ -8,6 +8,7 @@ const STORAGE_KEYS = {
   CATEGORIES: 'cloudbudget_categories',
   TAGS: 'cloudbudget_tags',
   MERCHANTS: 'cloudbudget_merchants',
+  CURRENCIES: 'cloudbudget_currencies',
   LAST_SYNC: 'cloudbudget_last_sync',
   AUTH_TOKEN: 'cloudbudget_auth_token',
   USER_INFO: 'cloudbudget_user_info',
@@ -64,6 +65,25 @@ export const storage = {
   setMerchants: (merchants: Merchant[]): void => {
     localStorage.setItem(STORAGE_KEYS.MERCHANTS, JSON.stringify(merchants));
   },
+
+  // Currencies
+  getCurrencies: (): Currency[] => {
+    const data = localStorage.getItem(STORAGE_KEYS.CURRENCIES);
+    if (data) {
+      try {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) {
+        console.error('Error parsing currencies from localStorage', e);
+        return [];
+      }
+    }
+    return [];
+  },
+
+  setCurrencies: (currencies: Currency[]): void => {
+    localStorage.setItem(STORAGE_KEYS.CURRENCIES, JSON.stringify(currencies));
+  },
   
   // Last Sync
   getLastSync: (): string => {
@@ -77,7 +97,10 @@ export const storage = {
   // Clear all data
   clearAll: (): void => {
     Object.values(STORAGE_KEYS).forEach(key => {
-      localStorage.removeItem(key);
+      // Keep auth info
+      if (key !== STORAGE_KEYS.AUTH_TOKEN && key !== STORAGE_KEYS.USER_INFO && key !== STORAGE_KEYS.AUTO_SYNC_ENABLED) {
+        localStorage.removeItem(key);
+      }
     });
   },
   

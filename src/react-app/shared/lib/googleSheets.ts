@@ -1,7 +1,7 @@
 // Google Sheets API service for reading and writing data to Google Drive
 // Requires scope: https://www.googleapis.com/auth/drive.file
 
-import { Account, Category, Merchant, Tag, Transaction } from '../types';
+import { Account, Category, Currency, Merchant, Tag, Transaction } from '../types';
 import { storage } from './storage';
 
 const FOLDER_NAME = 'cloudbudget';
@@ -14,6 +14,7 @@ export interface BackupData {
   categories: Category[];
   tags: Tag[];
   merchants: Merchant[];
+  currencies: Currency[];
   exportDate: string;
 }
 
@@ -24,6 +25,7 @@ const SHEET_NAMES = {
   categories: 'Categories',
   tags: 'Tags',
   merchants: 'Merchants',
+  currencies: 'Currencies',
   metadata: 'Metadata',
 } as const;
 
@@ -95,7 +97,29 @@ class GoogleSheetsService {
     const searchResult = await searchResponse.json();
 
     if (searchResult.files && searchResult.files.length > 0) {
-      return searchResult.files[0].id;
+      const spreadsheetId = searchResult.files[0].id;
+      
+      // For existing spreadsheets: check for and create missing sheets
+      const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties.title`;
+      const getResponse = await this.fetchWithAuth(getUrl);
+      const spreadsheetData = await getResponse.json();
+      const existingSheetTitles = spreadsheetData.sheets?.map((s: any) => s.properties.title) || [];
+      
+      const allSheetNames = Object.values(SHEET_NAMES);
+      const missingSheets = allSheetNames.filter(name => !existingSheetTitles.includes(name));
+
+      if (missingSheets.length > 0) {
+        const batchUpdateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`;
+        const requests = missingSheets.map(title => ({
+          addSheet: { properties: { title } },
+        }));
+        await this.fetchWithAuth(batchUpdateUrl, {
+          method: 'POST',
+          body: JSON.stringify({ requests }),
+        });
+      }
+      
+      return spreadsheetId;
     }
 
     // Create spreadsheet using Drive API (more reliable for CORS)
@@ -123,6 +147,7 @@ class GoogleSheetsService {
       SHEET_NAMES.categories,
       SHEET_NAMES.tags,
       SHEET_NAMES.merchants,
+      SHEET_NAMES.currencies,
       SHEET_NAMES.metadata,
     ];
 
@@ -217,12 +242,13 @@ class GoogleSheetsService {
     await this.writeSheet(spreadsheetId, SHEET_NAMES.transactions, transactionHeaders, transactionRows);
 
     // Save accounts
-    const accountHeaders = ['id', 'name', 'type', 'balance', 'icon', 'color'];
+    const accountHeaders = ['id', 'name', 'type', 'balance', 'currency', 'icon', 'color'];
     const accountRows = data.accounts.map(a => [
       a.id,
       a.name,
       a.type,
       a.balance,
+      a.currency,
       a.icon || '',
       a.color || '',
     ]);
@@ -255,6 +281,16 @@ class GoogleSheetsService {
       m.category || '',
     ]);
     await this.writeSheet(spreadsheetId, SHEET_NAMES.merchants, merchantHeaders, merchantRows);
+
+    // Save currencies
+    const currencyHeaders = ['id', 'code', 'name', 'symbol'];
+    const currencyRows = (data.currencies || []).map(c => [
+      c.id,
+      c.code,
+      c.name,
+      c.symbol,
+    ]);
+    await this.writeSheet(spreadsheetId, SHEET_NAMES.currencies, currencyHeaders, currencyRows);
 
     // Save metadata
     const metadataHeaders = ['key', 'value'];
@@ -341,8 +377,9 @@ class GoogleSheetsService {
         name: accGet(row, 'name') || row[1] || '未命名帳戶',
         type: (accGet(row, 'type') || row[2] || 'cash') as Account['type'],
         balance: safeNumber(accGet(row, 'balance') || row[3], 0),
+        currency: accGet(row, 'currency') || 'TWD',
         icon: accGet(row, 'icon') || undefined,
-        color: accGet(row, 'color') || undefined,
+        color: accGet(row, 'color') || row[6] || undefined,
       }));
 
       // Read categories
@@ -376,6 +413,29 @@ class GoogleSheetsService {
         category: merchantGet(row, 'category') || undefined,
       }));
 
+      // Read currencies
+      const currencyData = await this.readSheet(spreadsheetId, SHEET_NAMES.currencies);
+      let currencies: Currency[] = [];
+      if (currencyData && currencyData.length > 1) {
+        const currencyHeaders = currencyData[0] || [];
+        const currencyGet = this.createRowMapper(currencyHeaders);
+        currencies = currencyData.slice(1).map(row => ({
+          id: safeNumber(currencyGet(row, 'id') || row[0], Date.now()),
+          code: currencyGet(row, 'code') || row[1] || '',
+          name: currencyGet(row, 'name') || row[2] || '',
+          symbol: currencyGet(row, 'symbol') || row[3] || '',
+        }));
+      } else {
+        // Provide default currencies if sheet is empty or does not exist
+        currencies = [
+          { id: 1, code: 'TWD', name: '新台幣', symbol: 'NT$' },
+          { id: 2, code: 'USD', name: '美元', symbol: '$' },
+          { id: 3, code: 'EUR', name: '歐元', symbol: '€' },
+          { id: 4, code: 'JPY', name: '日圓', symbol: '¥' },
+          { id: 5, code: 'CNY', name: '人民幣', symbol: '¥' },
+        ];
+      }
+
       // Read metadata
       const metadataData = await this.readSheet(spreadsheetId, SHEET_NAMES.metadata);
       const metadata = Object.fromEntries(metadataData.slice(1));
@@ -386,6 +446,7 @@ class GoogleSheetsService {
         categories,
         tags,
         merchants,
+        currencies,
         exportDate: metadata.exportDate || new Date().toISOString(),
       };
     } catch (error) {

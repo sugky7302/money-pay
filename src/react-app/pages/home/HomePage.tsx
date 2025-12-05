@@ -1,7 +1,7 @@
 // Home Page
 
-import { ArrowDownUp, ChevronDown, Cloud, CreditCard, Filter, RefreshCw, Search as SearchIcon, X } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import { ArrowDownUp, Cloud, CreditCard, Filter, RefreshCw, Search as SearchIcon, X } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
 import { Search } from '../../features/search/Search';
 import { TransactionForm } from '../../features/transaction-form/TransactionForm';
@@ -11,8 +11,8 @@ import { BalanceCard } from '../../widgets/balance-card/BalanceCard';
 import { TransactionList } from '../../widgets/transaction-list/TransactionList';
 
 type SortOrder = 'newest' | 'oldest';
-type DisplayLimit = 10 | 20 | 50 | 100 | 'all';
 type FilterState = 'none' | 'include' | 'exclude';
+const PAGE_SIZE = 20;
 
 const TYPE_LABELS: Record<TransactionType, string> = {
   expense: '支出',
@@ -29,8 +29,10 @@ export const HomePage: React.FC = () => {
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
-  const [displayLimit, setDisplayLimit] = useState<DisplayLimit>(20);
-  const [showLimitMenu, setShowLimitMenu] = useState(false);
+  const [displayLimit, setDisplayLimit] = useState<number>(PAGE_SIZE);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
   
   // 篩選狀態
   const [showFilterMenu, setShowFilterMenu] = useState(false);
@@ -128,9 +130,6 @@ export const HomePage: React.FC = () => {
     });
     
     // Apply limit
-    if (displayLimit === 'all') {
-      return sorted;
-    }
     return sorted.slice(0, displayLimit);
   }, [isSearchActive, filteredTransactions, transactions, sortOrder, displayLimit, includeTypes, excludeTypes, filterCategory]);
 
@@ -153,10 +152,37 @@ export const HomePage: React.FC = () => {
   }, [isSearchActive, filteredTransactions, transactions, includeTypes, excludeTypes, filterCategory]);
 
   const totalCount = isSearchActive ? filteredTransactions.length : transactions.length;
+  const canLoadMore = displayedTransactions.length < filteredCount;
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target || !canLoadMore) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setDisplayLimit(prev => {
+            const next = prev + PAGE_SIZE;
+            return next >= filteredCount ? filteredCount : next;
+          });
+        }
+      });
+    }, { rootMargin: '200px' });
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [canLoadMore, filteredCount]);
+
+  useEffect(() => {
+    const updateHeight = () => setHeaderHeight(headerRef.current?.offsetHeight || 0);
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
   
   return (
     <div className="pb-24">
-      <header className="px-6 pt-12 pb-6 bg-gradient-to-b from-gray-50 to-gray-100 sticky top-0 z-20">
+      <header ref={headerRef} className="px-6 pt-12 pb-6 bg-gradient-to-b from-gray-50 to-gray-100 sticky top-0 z-20">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">我的資產</h1>
           <div className="flex gap-2">
@@ -189,7 +215,10 @@ export const HomePage: React.FC = () => {
       </header>
 
       <div className="px-6">
-        <div className="flex justify-between items-center mb-4">
+        <div 
+          className="flex justify-between items-center py-2 mb-4 sticky z-10 bg-white/90 backdrop-blur border-b border-gray-100"
+          style={{ top: headerHeight }}
+        >
           <h3 className="text-lg font-bold text-gray-800">
             {isSearchActive ? '搜尋結果' : '近期交易'}
           </h3>
@@ -287,42 +316,6 @@ export const HomePage: React.FC = () => {
               {sortOrder === 'newest' ? '最新' : '最舊'}
             </button>
             
-            {/* Display Limit Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setShowLimitMenu(!showLimitMenu)}
-                className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-              >
-                {displayLimit === 'all' ? '全部' : `${displayLimit} 筆`}
-                <ChevronDown size={12} />
-              </button>
-              
-              {showLimitMenu && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-10" 
-                    onClick={() => setShowLimitMenu(false)} 
-                  />
-                  <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20 min-w-[80px]">
-                    {([10, 20, 50, 100, 'all'] as DisplayLimit[]).map((limit) => (
-                      <button
-                        key={limit}
-                        onClick={() => {
-                          setDisplayLimit(limit);
-                          setShowLimitMenu(false);
-                        }}
-                        className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 transition-colors ${
-                          displayLimit === limit ? 'text-blue-600 font-medium' : 'text-gray-600'
-                        }`}
-                      >
-                        {limit === 'all' ? '全部' : `${limit} 筆`}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-            
             {/* Count Badge */}
             <span className="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-1 rounded-md">
               {displayedTransactions.length === filteredCount 
@@ -382,6 +375,9 @@ export const HomePage: React.FC = () => {
             transactions={displayedTransactions} 
             onEdit={handleEdit}
           />
+        )}
+        {canLoadMore && (
+          <div ref={loadMoreRef} className="h-10" />
         )}
       </div>
       

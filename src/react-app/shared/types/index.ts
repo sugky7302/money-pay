@@ -2,34 +2,12 @@
 
 export type TransactionType = 'expense' | 'income' | 'transfer' | 'adjustment';
 
-// Supported currencies
-export type Currency = 'TWD' | 'USD' | 'EUR' | 'JPY' | 'CNY' | 'HKD' | 'GBP' | 'KRW' | 'SGD' | 'THB';
-
-export const CURRENCY_SYMBOLS: Record<Currency, string> = {
-  TWD: 'NT$',
-  USD: '$',
-  EUR: '€',
-  JPY: '¥',
-  CNY: '¥',
-  HKD: 'HK$',
-  GBP: '£',
-  KRW: '₩',
-  SGD: 'S$',
-  THB: '฿',
-};
-
-export const CURRENCY_NAMES: Record<Currency, string> = {
-  TWD: '新台幣',
-  USD: '美元',
-  EUR: '歐元',
-  JPY: '日圓',
-  CNY: '人民幣',
-  HKD: '港幣',
-  GBP: '英鎊',
-  KRW: '韓元',
-  SGD: '新加坡元',
-  THB: '泰銖',
-};
+export interface Currency {
+  id: number;
+  code: string; // e.g. TWD, USD
+  name: string; // e.g. 新台幣, 美元
+  symbol: string; // e.g. NT$, $
+}
 
 export interface Transaction {
   id: number;
@@ -53,7 +31,7 @@ export interface Account {
   name: string;
   type: 'bank' | 'cash' | 'e-wallet' | 'credit-card' | 'other';
   balance: number;
-  currency: Currency;
+  currency: string; // Currency code, e.g. 'TWD'
   icon?: string;
   color?: string;
 }
@@ -64,7 +42,6 @@ export interface Category {
   type: 'expense' | 'income';
   icon?: string;
 }
-
 export interface Tag {
   id: number;
   name: string;

@@ -1,21 +1,23 @@
 // Settings Page
 
-import { AlertCircle, Cloud, Download, FolderPlus, LogOut, Plus, RefreshCw, Store, Tag, Upload, User, Zap } from 'lucide-react';
+import { AlertCircle, Cloud, Download, FolderPlus, LogOut, Plus, RefreshCw, Store, Tag, Upload, User, Zap, DollarSign } from 'lucide-react';
 import React, { useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
 import { useAuth } from '../../app/AuthContext';
 import { CategoryForm } from '../../features/category-form/CategoryForm';
+import { CurrencyForm } from '../../features/currency-form/CurrencyForm';
 import { MerchantForm } from '../../features/merchant-form/MerchantForm';
 import { TagForm } from '../../features/tag-form/TagForm';
 import { useUIStore } from '../../shared/stores/useUIStore';
 
 export const SettingsPage: React.FC = () => {
   const { setManagementModalOpen } = useUIStore();
-  const { syncToCloud, loadFromCloud, downloadBackup, clearAllData, lastSyncTime, categories, tags, merchants, isSyncing, autoSyncEnabled, toggleAutoSync } = useAppContext();
+  const { syncToCloud, loadFromCloud, downloadBackup, clearAllData, lastSyncTime, categories, tags, merchants, currencies, isSyncing, autoSyncEnabled, toggleAutoSync } = useAppContext();
   const { logout, userInfo } = useAuth();
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showTagModal, setShowTagModal] = useState(false);
   const [showMerchantModal, setShowMerchantModal] = useState(false);
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   
   const handleSyncToCloud = async () => {
     await syncToCloud();
@@ -129,7 +131,7 @@ export const SettingsPage: React.FC = () => {
                 setShowMerchantModal(true);
                 setManagementModalOpen(true);
               }}
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              className="w-full p-4 flex items-center justify-between border-b border-gray-50 hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className="bg-orange-50 p-2 rounded-lg text-orange-600">
@@ -138,6 +140,25 @@ export const SettingsPage: React.FC = () => {
                 <div className="text-left">
                   <h4 className="font-medium text-gray-800">管理商家</h4>
                   <p className="text-xs text-gray-500">{merchants.length} 個商家</p>
+                </div>
+              </div>
+              <Plus size={20} className="text-gray-400" />
+            </button>
+            
+            <button
+              onClick={() => {
+                setShowCurrencyModal(true);
+                setManagementModalOpen(true);
+              }}
+              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-yellow-50 p-2 rounded-lg text-yellow-600">
+                  <DollarSign size={20} />
+                </div>
+                <div className="text-left">
+                  <h4 className="font-medium text-gray-800">管理幣別</h4>
+                  <p className="text-xs text-gray-500">{currencies.length} 個幣別</p>
                 </div>
               </div>
               <Plus size={20} className="text-gray-400" />
@@ -285,6 +306,14 @@ export const SettingsPage: React.FC = () => {
         isOpen={showMerchantModal}
         onClose={() => {
           setShowMerchantModal(false);
+          setManagementModalOpen(false);
+        }}
+      />
+      
+      <CurrencyForm
+        isOpen={showCurrencyModal}
+        onClose={() => {
+          setShowCurrencyModal(false);
           setManagementModalOpen(false);
         }}
       />
