@@ -1,7 +1,7 @@
 // App context for state management
 
 import React, { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { DEFAULT_ACCOUNTS, DEFAULT_CATEGORIES, DEFAULT_TRANSACTIONS, googleSheetsService, storage } from '../shared/lib';
+import { googleSheetsService, storage } from '../shared/lib';
 import { Account, Category, Merchant, Tag, Transaction } from '../shared/types';
 
 // Auto-sync debounce delay (30 seconds to avoid rate limiting)
@@ -141,9 +141,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const savedSyncTime = storage.getLastSync();
       const savedAutoSync = storage.getAutoSyncEnabled();
       
-      setTransactions(savedTransactions.length > 0 ? savedTransactions : DEFAULT_TRANSACTIONS);
-      setAccounts(savedAccounts.length > 0 ? savedAccounts : DEFAULT_ACCOUNTS);
-      setCategories(savedCategories.length > 0 ? savedCategories : DEFAULT_CATEGORIES);
+      setTransactions(savedTransactions);
+      setAccounts(savedAccounts);
+      setCategories(savedCategories);
       setTags(savedTags);
       setMerchants(savedMerchants);
       setLastSyncTime(savedSyncTime);
@@ -378,7 +378,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     storage.clearAll();
     setTransactions([]);
     setAccounts([]);
-    setCategories(DEFAULT_CATEGORIES);
+    setCategories([]);
     setTags([]);
     setMerchants([]);
     setLastSyncTime('尚未備份');
