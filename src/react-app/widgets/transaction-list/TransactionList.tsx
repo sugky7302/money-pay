@@ -1,10 +1,10 @@
 // Transaction List Widget
 
+import { ArrowDownCircle, ArrowLeftRight, ArrowUpCircle, Edit, Trash2 } from 'lucide-react';
 import React from 'react';
-import { ArrowUpCircle, ArrowDownCircle, Trash2, Edit, ArrowLeftRight } from 'lucide-react';
-import { Transaction } from '../../shared/types';
-import { formatCurrency } from '../../shared/lib/utils';
 import { useAppContext } from '../../app/AppContext';
+import { formatCurrency } from '../../shared/lib/utils';
+import { Transaction } from '../../shared/types';
 
 interface TransactionListProps {
   transactions: Transaction[];

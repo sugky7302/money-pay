@@ -118,8 +118,6 @@ const GoogleOAuthWrapper: React.FC<{ children: React.ReactNode }> = ({
     return <LoadingScreen message="載入設定中..." />;
   }
 
-  console.log("Config in GoogleOAuthWrapper:", config, error);
-
   if (error || !config?.googleClientId) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
