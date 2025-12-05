@@ -1,13 +1,16 @@
 // Home Page
 
-import { Cloud, CreditCard, RefreshCw, Search as SearchIcon } from 'lucide-react';
-import React, { useState } from 'react';
+import { ArrowDownUp, ChevronDown, Cloud, CreditCard, RefreshCw, Search as SearchIcon } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
 import { Search } from '../../features/search/Search';
 import { TransactionForm } from '../../features/transaction-form/TransactionForm';
 import { Transaction } from '../../shared/types';
 import { BalanceCard } from '../../widgets/balance-card/BalanceCard';
 import { TransactionList } from '../../widgets/transaction-list/TransactionList';
+
+type SortOrder = 'newest' | 'oldest';
+type DisplayLimit = 10 | 20 | 50 | 100 | 'all';
 
 export const HomePage: React.FC = () => {
   const { transactions, lastSyncTime, syncToCloud, isSyncing } = useAppContext();
@@ -16,6 +19,9 @@ export const HomePage: React.FC = () => {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>();
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
   const [isSearchActive, setIsSearchActive] = useState(false);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
+  const [displayLimit, setDisplayLimit] = useState<DisplayLimit>(20);
+  const [showLimitMenu, setShowLimitMenu] = useState(false);
   
   const handleSync = async () => {
     await syncToCloud();
@@ -30,8 +36,30 @@ export const HomePage: React.FC = () => {
     setFilteredTransactions(results);
     setIsSearchActive(true);
   };
-  
-  const displayedTransactions = isSearchActive ? filteredTransactions : transactions;
+
+  const toggleSortOrder = () => {
+    setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest');
+  };
+
+  // Sort and limit transactions
+  const displayedTransactions = useMemo(() => {
+    const sourceTransactions = isSearchActive ? filteredTransactions : transactions;
+    
+    // Sort by date
+    const sorted = [...sourceTransactions].sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+    
+    // Apply limit
+    if (displayLimit === 'all') {
+      return sorted;
+    }
+    return sorted.slice(0, displayLimit);
+  }, [isSearchActive, filteredTransactions, transactions, sortOrder, displayLimit]);
+
+  const totalCount = isSearchActive ? filteredTransactions.length : transactions.length;
   
   return (
     <div className="pb-24">
@@ -68,13 +96,63 @@ export const HomePage: React.FC = () => {
       </header>
 
       <div className="px-6">
-        <div className="flex justify-between items-end mb-4">
+        <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold text-gray-800">
             {isSearchActive ? '搜尋結果' : '近期交易'}
           </h3>
-          <span className="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-1 rounded-md">
-            {displayedTransactions.length} 筆
-          </span>
+          <div className="flex items-center gap-2">
+            {/* Sort Button */}
+            <button
+              onClick={toggleSortOrder}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+            >
+              <ArrowDownUp size={12} />
+              {sortOrder === 'newest' ? '最新' : '最舊'}
+            </button>
+            
+            {/* Display Limit Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowLimitMenu(!showLimitMenu)}
+                className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                {displayLimit === 'all' ? '全部' : `${displayLimit} 筆`}
+                <ChevronDown size={12} />
+              </button>
+              
+              {showLimitMenu && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-10" 
+                    onClick={() => setShowLimitMenu(false)} 
+                  />
+                  <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20 min-w-[80px]">
+                    {([10, 20, 50, 100, 'all'] as DisplayLimit[]).map((limit) => (
+                      <button
+                        key={limit}
+                        onClick={() => {
+                          setDisplayLimit(limit);
+                          setShowLimitMenu(false);
+                        }}
+                        className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 transition-colors ${
+                          displayLimit === limit ? 'text-blue-600 font-medium' : 'text-gray-600'
+                        }`}
+                      >
+                        {limit === 'all' ? '全部' : `${limit} 筆`}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+            
+            {/* Count Badge */}
+            <span className="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-1 rounded-md">
+              {displayedTransactions.length === totalCount 
+                ? `${totalCount} 筆` 
+                : `${displayedTransactions.length}/${totalCount} 筆`}
+            </span>
+          </div>
         </div>
         
         {displayedTransactions.length === 0 ? (
