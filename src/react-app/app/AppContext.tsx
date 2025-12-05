@@ -210,34 +210,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Transaction actions
   const addTransaction = (transaction: Transaction) => {
     setTransactions([transaction, ...transactions]);
-    
-    // Update account balances
-    if (transaction.type === 'transfer' && transaction.fromAccount && transaction.toAccount) {
-      setAccounts(prevAccounts => 
-        prevAccounts.map(acc => {
-          if (acc.name === transaction.fromAccount) {
-            return { ...acc, balance: acc.balance - transaction.amount };
-          }
-          if (acc.name === transaction.toAccount) {
-            return { ...acc, balance: acc.balance + transaction.amount };
-          }
-          return acc;
-        })
-      );
-    } else if (transaction.account) {
-      // Update account balance for regular income/expense transactions
-      setAccounts(prevAccounts => 
-        prevAccounts.map(acc => {
-          if (acc.name === transaction.account) {
-            const balanceChange = transaction.type === 'income' 
-              ? transaction.amount 
-              : -transaction.amount;
-            return { ...acc, balance: acc.balance + balanceChange };
-          }
-          return acc;
-        })
-      );
-    }
+    // 注意：不需要在這裡更新 account.balance
+    // 因為 calculateAccountBalance() 會根據交易動態計算當前餘額
+    // account.balance 儲存的是「初始餘額」
   };
   
   const updateTransaction = (id: number, updatedTransaction: Partial<Transaction>) => {

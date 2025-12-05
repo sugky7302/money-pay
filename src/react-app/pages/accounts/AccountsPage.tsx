@@ -1,24 +1,35 @@
 // Accounts Page
 
-import React, { useState } from 'react';
 import { Plus, Wallet } from 'lucide-react';
+import React, { useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
-import { AccountList } from '../../widgets/account-list/AccountList';
 import { AccountForm } from '../../features/account-form/AccountForm';
+import { BalanceAdjustmentForm } from '../../features/balance-adjustment/BalanceAdjustmentForm';
+import { calculateTotalBalance, formatCurrency } from '../../shared/lib/utils';
 import { Account } from '../../shared/types';
-import { formatCurrency } from '../../shared/lib/utils';
+import { AccountList } from '../../widgets/account-list/AccountList';
 
 export const AccountsPage: React.FC = () => {
-  const { accounts } = useAppContext();
+  const { accounts, transactions } = useAppContext();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | undefined>();
+  const [adjustingAccount, setAdjustingAccount] = useState<Account | undefined>();
+  const [adjustingBalance, setAdjustingBalance] = useState(0);
   
-  const totalBalance = accounts.reduce((acc, account) => acc + account.balance, 0);
+  // 計算總資產 (所有帳戶的當前餘額總和)
+  const totalBalance = calculateTotalBalance(accounts, transactions);
   
   const handleEdit = (account: Account) => {
     setEditingAccount(account);
     setShowEditModal(true);
+  };
+
+  const handleAdjust = (account: Account, currentBalance: number) => {
+    setAdjustingAccount(account);
+    setAdjustingBalance(currentBalance);
+    setShowAdjustModal(true);
   };
   
   return (
@@ -62,7 +73,7 @@ export const AccountsPage: React.FC = () => {
           </button>
         </div>
       ) : (
-        <AccountList accounts={accounts} onEdit={handleEdit} />
+        <AccountList accounts={accounts} onEdit={handleEdit} onAdjust={handleAdjust} />
       )}
       
       <AccountForm 
@@ -79,6 +90,16 @@ export const AccountsPage: React.FC = () => {
         }}
         account={editingAccount}
         mode="edit"
+      />
+
+      <BalanceAdjustmentForm
+        isOpen={showAdjustModal}
+        onClose={() => {
+          setShowAdjustModal(false);
+          setAdjustingAccount(undefined);
+        }}
+        account={adjustingAccount}
+        currentBalance={adjustingBalance}
       />
     </div>
   );

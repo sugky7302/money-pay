@@ -1,6 +1,6 @@
 // Transaction List Widget
 
-import { ArrowDownCircle, ArrowLeftRight, ArrowUpCircle, Edit, Trash2 } from 'lucide-react';
+import { ArrowDownCircle, ArrowLeftRight, ArrowUpCircle, Edit, Scale, Trash2 } from 'lucide-react';
 import React from 'react';
 import { useAppContext } from '../../app/AppContext';
 import { formatCurrency } from '../../shared/lib/utils';
@@ -28,6 +28,8 @@ export const TransactionList: React.FC<TransactionListProps> = ({ transactions, 
         return <ArrowUpCircle size={20} />;
       case 'transfer':
         return <ArrowLeftRight size={20} />;
+      case 'adjustment':
+        return <Scale size={20} />;
     }
   };
   
@@ -39,10 +41,12 @@ export const TransactionList: React.FC<TransactionListProps> = ({ transactions, 
         return 'bg-green-50 text-green-500';
       case 'transfer':
         return 'bg-blue-50 text-blue-500';
+      case 'adjustment':
+        return 'bg-orange-50 text-orange-500';
     }
   };
   
-  const getAmountColor = (type: Transaction['type']) => {
+  const getAmountColor = (type: Transaction['type'], amount: number) => {
     switch (type) {
       case 'expense':
         return 'text-gray-800';
@@ -50,10 +54,12 @@ export const TransactionList: React.FC<TransactionListProps> = ({ transactions, 
         return 'text-green-600';
       case 'transfer':
         return 'text-blue-600';
+      case 'adjustment':
+        return amount >= 0 ? 'text-green-600' : 'text-red-600';
     }
   };
   
-  const getAmountPrefix = (type: Transaction['type']) => {
+  const getAmountPrefix = (type: Transaction['type'], amount: number) => {
     switch (type) {
       case 'expense':
         return '-';
@@ -61,6 +67,8 @@ export const TransactionList: React.FC<TransactionListProps> = ({ transactions, 
         return '+';
       case 'transfer':
         return '→';
+      case 'adjustment':
+        return amount >= 0 ? '+' : '';
     }
   };
   
@@ -76,23 +84,25 @@ export const TransactionList: React.FC<TransactionListProps> = ({ transactions, 
               {getTransactionIcon(item.type)}
             </div>
             <div className="flex-1">
-              <h4 className="font-semibold text-gray-800">{item.category}</h4>
+              <h4 className="font-semibold text-gray-800">
+                {item.type === 'transfer' ? '轉帳' : item.category}
+              </h4>
               <p className="text-xs text-gray-400">
                 {item.type === 'transfer' 
                   ? `${item.fromAccount} → ${item.toAccount}`
-                  : (item.note || item.date)
+                  : item.merchant || item.note || ''
                 }
               </p>
-              {item.account && item.type !== 'transfer' && (
-                <p className="text-xs text-gray-400">{item.account}</p>
-              )}
+              <p className="text-xs text-gray-300">
+                {item.date}{item.account && item.type !== 'transfer' ? ` · ${item.account}` : ''}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className={`font-bold ${getAmountColor(item.type)}`}>
-              {getAmountPrefix(item.type)}{formatCurrency(item.amount).replace('NT$', '')}
+            <span className={`font-bold ${getAmountColor(item.type, item.amount)}`}>
+              {getAmountPrefix(item.type, item.amount)}{formatCurrency(Math.abs(item.amount)).replace('NT$', '')}
             </span>
-            {onEdit && (
+            {onEdit && item.type !== 'adjustment' && (
               <button 
                 onClick={() => onEdit(item)} 
                 className="text-gray-300 hover:text-blue-400 p-2"

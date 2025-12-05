@@ -265,61 +265,115 @@ class GoogleSheetsService {
     await this.writeSheet(spreadsheetId, SHEET_NAMES.metadata, metadataHeaders, metadataRows);
   }
 
+  // Safely parse tags from string
+  private parseTags(value: string | undefined): string[] | undefined {
+    if (!value || value.trim() === '' || value === '[]') {
+      return undefined;
+    }
+    
+    // Try to parse as JSON first
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch {
+      // Not valid JSON, try other formats
+    }
+    
+    // Handle comma-separated format (e.g., "tag1,tag2,tag3")
+    if (value.includes(',')) {
+      return value.split(',').map(t => t.trim()).filter(t => t);
+    }
+    
+    // Single tag
+    return [value.trim()];
+  }
+
+  // Helper to create a row mapper based on headers
+  private createRowMapper(headers: string[]) {
+    const headerIndex: Record<string, number> = {};
+    headers.forEach((h, i) => {
+      headerIndex[h.toLowerCase()] = i;
+    });
+    return (row: string[], field: string): string | undefined => {
+      const idx = headerIndex[field.toLowerCase()];
+      return idx !== undefined ? row[idx] : undefined;
+    };
+  }
+
   // Load all data from Google Sheets
   async loadFromGoogleSheets(): Promise<BackupData | null> {
     try {
       const spreadsheetId = await this.getSpreadsheetId();
 
+      // Helper to safely parse number
+      const safeNumber = (value: string | undefined, fallback: number = 0): number => {
+        if (!value || value.trim() === '') return fallback;
+        const num = Number(value);
+        return isNaN(num) ? fallback : num;
+      };
+
       // Read transactions
       const transactionData = await this.readSheet(spreadsheetId, SHEET_NAMES.transactions);
+      const txHeaders = transactionData[0] || [];
+      const txGet = this.createRowMapper(txHeaders);
       const transactions: Transaction[] = transactionData.slice(1).map(row => ({
-        id: Number(row[0]),
-        type: row[1] as 'expense' | 'income' | 'transfer',
-        amount: Number(row[2]),
-        category: row[3],
-        date: row[4],
-        note: row[5] || undefined,
-        tags: row[6] ? JSON.parse(row[6]) : undefined,
-        merchant: row[7] || undefined,
-        account: row[8] || undefined,
-        fromAccount: row[9] || undefined,
-        toAccount: row[10] || undefined,
+        id: safeNumber(txGet(row, 'id') || row[0], Date.now()),
+        type: (txGet(row, 'type') || row[1] || 'expense') as 'expense' | 'income' | 'transfer' | 'adjustment',
+        amount: safeNumber(txGet(row, 'amount') || row[2], 0),
+        category: txGet(row, 'category') || '',
+        date: txGet(row, 'date') || row[4] || new Date().toISOString().split('T')[0],
+        note: txGet(row, 'note') || undefined,
+        tags: this.parseTags(txGet(row, 'tags')),
+        merchant: txGet(row, 'merchant') || undefined,
+        account: txGet(row, 'account') || undefined,
+        fromAccount: txGet(row, 'fromAccount') || txGet(row, 'fromaccount') || undefined,
+        toAccount: txGet(row, 'toAccount') || txGet(row, 'toaccount') || undefined,
       }));
 
       // Read accounts
       const accountData = await this.readSheet(spreadsheetId, SHEET_NAMES.accounts);
+      const accHeaders = accountData[0] || [];
+      const accGet = this.createRowMapper(accHeaders);
       const accounts: Account[] = accountData.slice(1).map(row => ({
-        id: Number(row[0]),
-        name: row[1],
-        type: row[2] as Account['type'],
-        balance: Number(row[3]),
-        icon: row[4] || undefined,
-        color: row[5] || undefined,
+        id: safeNumber(accGet(row, 'id') || row[0], Date.now()),
+        name: accGet(row, 'name') || row[1] || '未命名帳戶',
+        type: (accGet(row, 'type') || row[2] || 'cash') as Account['type'],
+        balance: safeNumber(accGet(row, 'balance') || row[3], 0),
+        icon: accGet(row, 'icon') || undefined,
+        color: accGet(row, 'color') || undefined,
       }));
 
       // Read categories
       const categoryData = await this.readSheet(spreadsheetId, SHEET_NAMES.categories);
+      const catHeaders = categoryData[0] || [];
+      const catGet = this.createRowMapper(catHeaders);
       const categories: Category[] = categoryData.slice(1).map(row => ({
-        id: Number(row[0]),
-        name: row[1],
-        type: row[2] as 'expense' | 'income',
-        icon: row[3] || undefined,
+        id: safeNumber(catGet(row, 'id') || row[0], Date.now()),
+        name: catGet(row, 'name') || row[1] || '未分類',
+        type: (catGet(row, 'type') || row[2] || 'expense') as 'expense' | 'income',
+        icon: catGet(row, 'icon') || undefined,
       }));
 
       // Read tags
       const tagData = await this.readSheet(spreadsheetId, SHEET_NAMES.tags);
+      const tagHeaders = tagData[0] || [];
+      const tagGet = this.createRowMapper(tagHeaders);
       const tags: Tag[] = tagData.slice(1).map(row => ({
-        id: Number(row[0]),
-        name: row[1],
-        color: row[2] || undefined,
+        id: safeNumber(tagGet(row, 'id') || row[0], Date.now()),
+        name: tagGet(row, 'name') || row[1] || '未命名標籤',
+        color: tagGet(row, 'color') || undefined,
       }));
 
       // Read merchants
       const merchantData = await this.readSheet(spreadsheetId, SHEET_NAMES.merchants);
+      const merchantHeaders = merchantData[0] || [];
+      const merchantGet = this.createRowMapper(merchantHeaders);
       const merchants: Merchant[] = merchantData.slice(1).map(row => ({
-        id: Number(row[0]),
-        name: row[1],
-        category: row[2] || undefined,
+        id: safeNumber(merchantGet(row, 'id') || row[0], Date.now()),
+        name: merchantGet(row, 'name') || row[1] || '未命名商家',
+        category: merchantGet(row, 'category') || undefined,
       }));
 
       // Read metadata

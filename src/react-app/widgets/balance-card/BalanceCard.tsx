@@ -1,19 +1,15 @@
 // Balance Card Widget
 
+import { ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 import React from 'react';
-import { ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
-import { formatCurrency, getCurrentMonth } from '../../shared/lib/utils';
 import { useAppContext } from '../../app/AppContext';
+import { calculateTotalBalance, formatCurrency, getCurrentMonth } from '../../shared/lib/utils';
 
 export const BalanceCard: React.FC = () => {
-  const { transactions } = useAppContext();
+  const { transactions, accounts } = useAppContext();
   
-  // Calculate total balance
-  const totalBalance = transactions.reduce((acc, curr) => {
-    if (curr.type === 'income') return acc + curr.amount;
-    if (curr.type === 'expense') return acc - curr.amount;
-    return acc;
-  }, 0);
+  // Calculate total balance (帳戶初始餘額 + 收入 - 支出 ± 轉帳)
+  const totalBalance = calculateTotalBalance(accounts, transactions);
   
   // Calculate monthly stats
   const currentMonth = getCurrentMonth();

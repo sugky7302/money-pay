@@ -1,6 +1,6 @@
 // Shared types for the budgeting app
 
-export type TransactionType = 'expense' | 'income' | 'transfer';
+export type TransactionType = 'expense' | 'income' | 'transfer' | 'adjustment';
 
 export interface Transaction {
   id: number;

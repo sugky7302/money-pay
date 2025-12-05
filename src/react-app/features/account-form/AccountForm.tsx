@@ -1,13 +1,13 @@
 // Account Form Feature
 
-import React, { useState, useEffect } from 'react';
-import { Account } from '../../shared/types';
+import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
 import { generateId } from '../../shared/lib/utils';
-import { Modal } from '../../shared/ui/Modal';
-import { Input } from '../../shared/ui/Input';
-import { Select } from '../../shared/ui/Select';
+import { Account } from '../../shared/types';
 import { Button } from '../../shared/ui/Button';
+import { Input } from '../../shared/ui/Input';
+import { Modal } from '../../shared/ui/Modal';
+import { Select } from '../../shared/ui/Select';
 
 interface AccountFormProps {
   isOpen: boolean;
@@ -104,7 +104,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
         
         <Input
           type="number"
-          label="初始餘額"
+          label="餘額"
           value={formData.balance}
           onChange={(e) => setFormData({...formData, balance: Number(e.target.value)})}
           placeholder="0"
