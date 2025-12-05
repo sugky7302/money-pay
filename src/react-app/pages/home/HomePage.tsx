@@ -1,7 +1,7 @@
 // Home Page
 
-import { ArrowDownUp, ChevronDown, Cloud, CreditCard, Filter, RefreshCw, Search as SearchIcon, X } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import { ArrowDownUp, ChevronDown, Cloud, CreditCard, Filter, Loader2, RefreshCw, Search as SearchIcon, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
 import { Search } from '../../features/search/Search';
 import { TransactionForm } from '../../features/transaction-form/TransactionForm';
@@ -12,6 +12,9 @@ import { TransactionList } from '../../widgets/transaction-list/TransactionList'
 
 type SortOrder = 'newest' | 'oldest';
 type DisplayLimit = 10 | 20 | 50 | 100 | 'all';
+
+const INITIAL_LOAD_COUNT = 20;
+const LOAD_MORE_COUNT = 20;
 
 const TYPE_LABELS: Record<TransactionType, string> = {
   expense: '支出',
@@ -31,6 +34,11 @@ export const HomePage: React.FC = () => {
   const [displayLimit, setDisplayLimit] = useState<DisplayLimit>(20);
   const [showLimitMenu, setShowLimitMenu] = useState(false);
   
+  // 無限滾動狀態
+  const [displayCount, setDisplayCount] = useState(INITIAL_LOAD_COUNT);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const observerTarget = useRef<HTMLDivElement>(null);
+  
   // 篩選狀態
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [filterType, setFilterType] = useState<TransactionType | 'all'>('all');
@@ -48,10 +56,12 @@ export const HomePage: React.FC = () => {
   const handleSearch = (results: Transaction[]) => {
     setFilteredTransactions(results);
     setIsSearchActive(true);
+    setDisplayCount(INITIAL_LOAD_COUNT);
   };
 
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest');
+    setDisplayCount(INITIAL_LOAD_COUNT);
   };
 
   // 取得所有類別（從交易中）
@@ -70,10 +80,22 @@ export const HomePage: React.FC = () => {
   const clearFilters = () => {
     setFilterType('all');
     setFilterCategory('all');
+    setDisplayCount(INITIAL_LOAD_COUNT);
   };
 
-  // Sort and limit transactions
-  const displayedTransactions = useMemo(() => {
+  // 包裝 setFilterType 和 setFilterCategory 來自動重置顯示數量
+  const handleSetFilterType = (type: TransactionType | 'all') => {
+    setFilterType(type);
+    setDisplayCount(INITIAL_LOAD_COUNT);
+  };
+
+  const handleSetFilterCategory = (category: string) => {
+    setFilterCategory(category);
+    setDisplayCount(INITIAL_LOAD_COUNT);
+  };
+
+  // 取得所有已篩選和排序的交易（不限制數量）
+  const sortedAndFilteredTransactions = useMemo(() => {
     let sourceTransactions = isSearchActive ? filteredTransactions : transactions;
     
     // 套用類型篩選
@@ -87,32 +109,66 @@ export const HomePage: React.FC = () => {
     }
     
     // Sort by date
-    const sorted = [...sourceTransactions].sort((a, b) => {
+    return [...sourceTransactions].sort((a, b) => {
       const dateA = new Date(a.date).getTime();
       const dateB = new Date(b.date).getTime();
       return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
     });
-    
-    // Apply limit
-    if (displayLimit === 'all') {
-      return sorted;
+  }, [isSearchActive, filteredTransactions, transactions, sortOrder, filterType, filterCategory]);
+
+  // Sort and limit transactions
+  const displayedTransactions = useMemo(() => {
+    // 如果使用舊的顯示限制選項（非無限滾動），套用該限制
+    if (displayLimit !== 20) {
+      if (displayLimit === 'all') {
+        return sortedAndFilteredTransactions;
+      }
+      return sortedAndFilteredTransactions.slice(0, displayLimit);
     }
-    return sorted.slice(0, displayLimit);
-  }, [isSearchActive, filteredTransactions, transactions, sortOrder, displayLimit, filterType, filterCategory]);
+    
+    // 否則使用無限滾動的顯示數量
+    return sortedAndFilteredTransactions.slice(0, displayCount);
+  }, [sortedAndFilteredTransactions, displayLimit, displayCount]);
 
   // 篩選後的總數
-  const filteredCount = useMemo(() => {
-    let source = isSearchActive ? filteredTransactions : transactions;
-    if (filterType !== 'all') {
-      source = source.filter(t => t.type === filterType);
-    }
-    if (filterCategory !== 'all') {
-      source = source.filter(t => t.category === filterCategory);
-    }
-    return source.length;
-  }, [isSearchActive, filteredTransactions, transactions, filterType, filterCategory]);
+  const filteredCount = sortedAndFilteredTransactions.length;
 
   const totalCount = isSearchActive ? filteredTransactions.length : transactions.length;
+
+  // 無限滾動：加載更多交易
+  const loadMoreTransactions = useCallback(() => {
+    if (isLoadingMore || displayCount >= filteredCount || displayLimit !== 20) return;
+    
+    setIsLoadingMore(true);
+    // 模擬加載延遲
+    setTimeout(() => {
+      setDisplayCount(prev => Math.min(prev + LOAD_MORE_COUNT, filteredCount));
+      setIsLoadingMore(false);
+    }, 300);
+  }, [isLoadingMore, displayCount, filteredCount, displayLimit]);
+
+  // 使用 Intersection Observer 實現無限滾動
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && displayLimit === 20) {
+          loadMoreTransactions();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [loadMoreTransactions, displayLimit]);
   
   return (
     <div className="pb-24">
@@ -185,7 +241,7 @@ export const HomePage: React.FC = () => {
                       <label className="text-xs font-medium text-gray-500 mb-1.5 block">交易類型</label>
                       <div className="flex flex-wrap gap-1">
                         <button
-                          onClick={() => setFilterType('all')}
+                          onClick={() => handleSetFilterType('all')}
                           className={`px-2 py-1 text-xs rounded-md transition-colors ${
                             filterType === 'all' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           }`}
@@ -195,7 +251,7 @@ export const HomePage: React.FC = () => {
                         {(Object.keys(TYPE_LABELS) as TransactionType[]).map(type => (
                           <button
                             key={type}
-                            onClick={() => setFilterType(type)}
+                            onClick={() => handleSetFilterType(type)}
                             className={`px-2 py-1 text-xs rounded-md transition-colors ${
                               filterType === type ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
@@ -211,7 +267,7 @@ export const HomePage: React.FC = () => {
                       <label className="text-xs font-medium text-gray-500 mb-1.5 block">類別</label>
                       <select
                         value={filterCategory}
-                        onChange={(e) => setFilterCategory(e.target.value)}
+                        onChange={(e) => handleSetFilterCategory(e.target.value)}
                         className="w-full px-2 py-1.5 text-xs rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="all">全部類別</option>
@@ -271,6 +327,10 @@ export const HomePage: React.FC = () => {
                         onClick={() => {
                           setDisplayLimit(limit);
                           setShowLimitMenu(false);
+                          // 如果選擇 20 筆，重置為無限滾動模式
+                          if (limit === 20) {
+                            setDisplayCount(INITIAL_LOAD_COUNT);
+                          }
                         }}
                         className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 transition-colors ${
                           displayLimit === limit ? 'text-blue-600 font-medium' : 'text-gray-600'
@@ -302,7 +362,7 @@ export const HomePage: React.FC = () => {
             {filterType !== 'all' && (
               <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded-full">
                 {TYPE_LABELS[filterType]}
-                <button onClick={() => setFilterType('all')} className="hover:text-blue-800">
+                <button onClick={() => handleSetFilterType('all')} className="hover:text-blue-800">
                   <X size={12} />
                 </button>
               </span>
@@ -310,7 +370,7 @@ export const HomePage: React.FC = () => {
             {filterCategory !== 'all' && (
               <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded-full">
                 {filterCategory}
-                <button onClick={() => setFilterCategory('all')} className="hover:text-blue-800">
+                <button onClick={() => handleSetFilterCategory('all')} className="hover:text-blue-800">
                   <X size={12} />
                 </button>
               </span>
@@ -324,10 +384,29 @@ export const HomePage: React.FC = () => {
             <p>{isSearchActive ? '沒有符合的交易紀錄' : '目前沒有交易紀錄'}</p>
           </div>
         ) : (
-          <TransactionList 
-            transactions={displayedTransactions} 
-            onEdit={handleEdit}
-          />
+          <>
+            <TransactionList 
+              transactions={displayedTransactions} 
+              onEdit={handleEdit}
+            />
+            
+            {/* Infinite Scroll: Loading Indicator and Observer Target */}
+            {displayLimit === 20 && displayCount < filteredCount && (
+              <div ref={observerTarget} className="py-4 flex justify-center">
+                <div className="flex items-center gap-2 text-gray-400 text-sm">
+                  <Loader2 className="animate-spin" size={16} />
+                  <span>載入更多交易...</span>
+                </div>
+              </div>
+            )}
+            
+            {/* Show completion message when all items are loaded */}
+            {displayLimit === 20 && displayCount >= filteredCount && filteredCount > INITIAL_LOAD_COUNT && (
+              <div className="py-4 text-center text-gray-400 text-sm">
+                已顯示全部 {filteredCount} 筆交易
+              </div>
+            )}
+          </>
         )}
       </div>
       
