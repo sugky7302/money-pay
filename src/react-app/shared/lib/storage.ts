@@ -1,6 +1,6 @@
 // Local storage management
 
-import { Transaction, Account, Category, Tag, Merchant } from '../types';
+import { Account, Category, Merchant, Tag, Transaction } from '../types';
 
 const STORAGE_KEYS = {
   TRANSACTIONS: 'cloudbudget_transactions',
@@ -11,6 +11,7 @@ const STORAGE_KEYS = {
   LAST_SYNC: 'cloudbudget_last_sync',
   AUTH_TOKEN: 'cloudbudget_auth_token',
   USER_INFO: 'cloudbudget_user_info',
+  AUTO_SYNC_ENABLED: 'cloudbudget_auto_sync_enabled',
 };
 
 export const storage = {
@@ -104,5 +105,15 @@ export const storage = {
   
   removeUserInfo: (): void => {
     localStorage.removeItem(STORAGE_KEYS.USER_INFO);
+  },
+
+  // Auto-sync settings
+  getAutoSyncEnabled: (): boolean => {
+    const data = localStorage.getItem(STORAGE_KEYS.AUTO_SYNC_ENABLED);
+    return data === null ? true : data === 'true'; // Default to true
+  },
+
+  setAutoSyncEnabled: (enabled: boolean): void => {
+    localStorage.setItem(STORAGE_KEYS.AUTO_SYNC_ENABLED, String(enabled));
   },
 };

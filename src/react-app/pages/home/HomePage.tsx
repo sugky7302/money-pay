@@ -1,17 +1,16 @@
 // Home Page
 
+import { Cloud, CreditCard, RefreshCw, Search as SearchIcon } from 'lucide-react';
 import React, { useState } from 'react';
-import { Cloud, RefreshCw, CreditCard, Search as SearchIcon } from 'lucide-react';
 import { useAppContext } from '../../app/AppContext';
+import { Search } from '../../features/search/Search';
+import { TransactionForm } from '../../features/transaction-form/TransactionForm';
+import { Transaction } from '../../shared/types';
 import { BalanceCard } from '../../widgets/balance-card/BalanceCard';
 import { TransactionList } from '../../widgets/transaction-list/TransactionList';
-import { Transaction } from '../../shared/types';
-import { TransactionForm } from '../../features/transaction-form/TransactionForm';
-import { Search } from '../../features/search/Search';
 
 export const HomePage: React.FC = () => {
-  const { transactions, lastSyncTime, syncData } = useAppContext();
-  const [isSyncing, setIsSyncing] = useState(false);
+  const { transactions, lastSyncTime, syncToCloud, isSyncing } = useAppContext();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>();
@@ -19,9 +18,7 @@ export const HomePage: React.FC = () => {
   const [isSearchActive, setIsSearchActive] = useState(false);
   
   const handleSync = async () => {
-    setIsSyncing(true);
-    await syncData();
-    setTimeout(() => setIsSyncing(false), 1500);
+    await syncToCloud();
   };
   
   const handleEdit = (transaction: Transaction) => {

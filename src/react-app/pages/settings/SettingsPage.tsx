@@ -1,25 +1,28 @@
 // Settings Page
 
+import { AlertCircle, Cloud, Download, FolderPlus, LogOut, Plus, RefreshCw, Store, Tag, Upload, User, Zap } from 'lucide-react';
 import React, { useState } from 'react';
-import { Cloud, Check, AlertCircle, Plus, Tag, Store, FolderPlus, LogOut, User } from 'lucide-react';
 import { useAppContext } from '../../app/AppContext';
 import { useAuth } from '../../app/AuthContext';
 import { CategoryForm } from '../../features/category-form/CategoryForm';
-import { TagForm } from '../../features/tag-form/TagForm';
 import { MerchantForm } from '../../features/merchant-form/MerchantForm';
+import { TagForm } from '../../features/tag-form/TagForm';
 
 export const SettingsPage: React.FC<{ setIsManagementModalOpen: (isOpen: boolean) => void }> = ({ setIsManagementModalOpen }) => {
-  const { syncData, clearAllData, lastSyncTime, categories, tags, merchants } = useAppContext();
+  const { syncToCloud, loadFromCloud, downloadBackup, clearAllData, lastSyncTime, categories, tags, merchants, isSyncing, autoSyncEnabled, toggleAutoSync } = useAppContext();
   const { logout, userInfo } = useAuth();
-  const [isSyncing, setIsSyncing] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showTagModal, setShowTagModal] = useState(false);
   const [showMerchantModal, setShowMerchantModal] = useState(false);
   
-  const handleSync = async () => {
-    setIsSyncing(true);
-    await syncData();
-    setTimeout(() => setIsSyncing(false), 1500);
+  const handleSyncToCloud = async () => {
+    await syncToCloud();
+  };
+  
+  const handleLoadFromCloud = async () => {
+    if (window.confirm('從雲端載入資料將會覆蓋本機資料，確定要繼續嗎？')) {
+      await loadFromCloud();
+    }
   };
   
   const handleClearAll = () => {
@@ -142,7 +145,7 @@ export const SettingsPage: React.FC<{ setIsManagementModalOpen: (isOpen: boolean
         
         <section>
           <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 ml-2">
-            雲端備份
+            Google Drive 雲端同步
           </h3>
           <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
             <div className="p-4 flex items-center justify-between border-b border-gray-50">
@@ -151,28 +154,78 @@ export const SettingsPage: React.FC<{ setIsManagementModalOpen: (isOpen: boolean
                   <Cloud size={20} />
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-800">下載備份檔</h4>
-                  <p className="text-xs text-gray-500">格式：JSON</p>
+                  <h4 className="font-medium text-gray-800">雲端同步</h4>
+                  <p className="text-xs text-gray-500">同步至 Google Drive</p>
                 </div>
               </div>
-              <div className="text-green-500 bg-green-50 p-1 rounded-full">
-                <Check size={16} />
-              </div>
+              {isSyncing && (
+                <RefreshCw size={18} className="text-blue-500 animate-spin" />
+              )}
             </div>
-            <button 
-              onClick={handleSync}
-              disabled={isSyncing}
-              className="w-full p-4 text-center text-blue-600 font-medium text-sm hover:bg-gray-50 transition-colors disabled:opacity-50"
+            <div className="flex border-b border-gray-50">
+              <button 
+                onClick={handleSyncToCloud}
+                disabled={isSyncing}
+                className="flex-1 p-4 flex items-center justify-center gap-2 text-blue-600 font-medium text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 border-r border-gray-50"
+              >
+                <Upload size={16} />
+                上傳到雲端
+              </button>
+              <button 
+                onClick={handleLoadFromCloud}
+                disabled={isSyncing}
+                className="flex-1 p-4 flex items-center justify-center gap-2 text-green-600 font-medium text-sm hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                <Download size={16} />
+                從雲端載入
+              </button>
+            </div>
+            <button
+              onClick={toggleAutoSync}
+              className="w-full p-4 flex items-center justify-between border-b border-gray-50 hover:bg-gray-50 transition-colors"
             >
-              {isSyncing ? '準備下載中...' : '立即下載備份'}
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${autoSyncEnabled ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+                  <Zap size={20} />
+                </div>
+                <div className="text-left">
+                  <h4 className="font-medium text-gray-800">自動同步</h4>
+                  <p className="text-xs text-gray-500">資料變更後自動上傳</p>
+                </div>
+              </div>
+              <div className={`w-12 h-7 rounded-full p-1 transition-colors ${autoSyncEnabled ? 'bg-green-500' : 'bg-gray-300'}`}>
+                <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${autoSyncEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+              </div>
             </button>
             <div className="p-3 bg-gray-50 flex gap-2 items-start">
               <AlertCircle size={14} className="text-gray-400 shrink-0 mt-0.5" />
               <p className="text-[10px] text-gray-400 leading-relaxed">
-                請定期下載備份並儲存到您的 Google Drive。更換手機時需要此檔案。<br />
-                上次備份：{lastSyncTime}
+                資料會同步到 Google Drive 中的 cloudbudget 資料夾。<br />
+                上次同步：{lastSyncTime}
               </p>
             </div>
+          </div>
+        </section>
+        
+        <section>
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 ml-2">
+            本機備份
+          </h3>
+          <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+            <button 
+              onClick={downloadBackup}
+              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-gray-100 p-2 rounded-lg text-gray-600">
+                  <Download size={20} />
+                </div>
+                <div className="text-left">
+                  <h4 className="font-medium text-gray-800">下載 JSON 備份</h4>
+                  <p className="text-xs text-gray-500">匯出所有資料到檔案</p>
+                </div>
+              </div>
+            </button>
           </div>
         </section>
 

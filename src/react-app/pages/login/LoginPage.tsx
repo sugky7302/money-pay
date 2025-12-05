@@ -53,6 +53,7 @@ export const LoginPage: React.FC = () => {
       console.error("Google Sign-In failed");
       alert("Google 登入失敗，請稍後再試。");
     },
+    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets',
   });
 
   return (

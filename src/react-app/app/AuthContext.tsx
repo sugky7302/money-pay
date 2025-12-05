@@ -1,7 +1,7 @@
 // Authentication context for managing user authentication state
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { storage } from '../shared/lib';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { googleSheetsService, storage } from '../shared/lib';
 
 interface UserInfo {
   name: string;
@@ -24,6 +24,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const logout = () => {
+    storage.removeAuthToken();
+    storage.removeUserInfo();
+    setIsAuthenticated(false);
+    setUserInfo(null);
+  };
+
   useEffect(() => {
     // Check for existing authentication token on mount
     const checkAuth = () => {
@@ -39,6 +46,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     
     checkAuth();
+
+    // Set up token expiration callback
+    googleSheetsService.onTokenExpired = () => {
+      logout();
+    };
+
+    return () => {
+      googleSheetsService.onTokenExpired = null;
+    };
   }, []);
 
   const login = (token: string, user: UserInfo) => {
@@ -46,13 +62,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     storage.setUserInfo(user);
     setIsAuthenticated(true);
     setUserInfo(user);
-  };
-
-  const logout = () => {
-    storage.removeAuthToken();
-    storage.removeUserInfo();
-    setIsAuthenticated(false);
-    setUserInfo(null);
   };
 
   const value: AuthContextType = {
