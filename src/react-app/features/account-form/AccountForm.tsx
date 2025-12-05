@@ -42,6 +42,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
     type: 'cash',
     balance: 0,
     color: COLORS[0],
+    isVirtual: false,
   });
   
   useEffect(() => {
@@ -54,6 +55,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
           type: 'cash',
           balance: 0,
           color: COLORS[0],
+          isVirtual: false,
         });
       }
     };
@@ -74,6 +76,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
         type: formData.type as Account['type'],
         balance: Number(formData.balance) || 0,
         color: formData.color,
+        isVirtual: formData.isVirtual || false,
       };
       addAccount(newAccount);
     } else if (account) {
@@ -100,6 +103,16 @@ export const AccountForm: React.FC<AccountFormProps> = ({
           options={ACCOUNT_TYPES}
           value={formData.type}
           onChange={(e) => setFormData({...formData, type: e.target.value as Account['type']})}
+        />
+        
+        <Select
+          label="帳戶性質"
+          options={[
+            { value: 'false', label: '實體帳戶' },
+            { value: 'true', label: '虛擬帳戶（不計入總資產）' },
+          ]}
+          value={formData.isVirtual ? 'true' : 'false'}
+          onChange={(e) => setFormData({...formData, isVirtual: e.target.value === 'true'})}
         />
         
         <Input

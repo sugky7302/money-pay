@@ -23,6 +23,7 @@ export interface Account {
   balance: number;
   icon?: string;
   color?: string;
+  isVirtual?: boolean; // 虛擬帳戶標記，虛擬帳戶不計入資產總額
 }
 
 export interface Category {

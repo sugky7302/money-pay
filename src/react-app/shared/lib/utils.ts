@@ -60,12 +60,17 @@ export const calculateAccountBalance = (
 
 /**
  * 計算所有帳戶的當前餘額總和
+ * 虛擬帳戶 (isVirtual=true) 不計入總資產
  */
 export const calculateTotalBalance = (
   accounts: Account[],
   transactions: Transaction[]
 ): number => {
   return accounts.reduce((total, account) => {
+    // 虛擬帳戶不計入總資產
+    if (account.isVirtual) {
+      return total;
+    }
     return total + calculateAccountBalance(account, transactions);
   }, 0);
 };

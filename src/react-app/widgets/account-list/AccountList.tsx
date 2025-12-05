@@ -48,7 +48,12 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
                 <Wallet size={20} />
               </div>
               <div className="flex-1">
-                <h4 className="font-semibold text-gray-800">{account.name}</h4>
+                <h4 className="font-semibold text-gray-800">
+                  {account.name}
+                  {account.isVirtual && (
+                    <span className="ml-2 text-xs text-gray-400 font-normal">(虛擬)</span>
+                  )}
+                </h4>
                 <p className="text-xs text-gray-400">{ACCOUNT_TYPE_LABELS[account.type]}</p>
               </div>
             </div>
