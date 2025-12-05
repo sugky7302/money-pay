@@ -59,6 +59,10 @@ export const TransferForm: React.FC<TransferFormProps> = ({ isOpen, onClose }) =
   
   const accountOptions = accounts.map(a => ({ value: a.name, label: a.name }));
   
+  // Check if the from account has sufficient balance
+  const fromAccount = accounts.find(a => a.name === formData.fromAccount);
+  const hasInsufficientFunds = fromAccount && formData.amount > 0 && formData.amount > fromAccount.balance;
+  
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="轉帳">
       <div className="space-y-4">
@@ -76,6 +80,9 @@ export const TransferForm: React.FC<TransferFormProps> = ({ isOpen, onClose }) =
               autoFocus
             />
           </div>
+          {hasInsufficientFunds && (
+            <p className="text-red-500 text-sm font-medium mt-2 ml-1">金額不足</p>
+          )}
         </div>
 
         {accountOptions.length > 0 && (
