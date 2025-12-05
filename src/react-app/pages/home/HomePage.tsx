@@ -22,7 +22,7 @@ const TYPE_LABELS: Record<TransactionType, string> = {
 };
 
 export const HomePage: React.FC = () => {
-  const { transactions, lastSyncTime, syncToCloud, isSyncing } = useAppContext();
+  const { transactions, categories, lastSyncTime, syncToCloud, isSyncing } = useAppContext();
   const { isSearchModalOpen, setSearchModalOpen } = useUIStore();
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>();
@@ -42,7 +42,7 @@ export const HomePage: React.FC = () => {
     transfer: 'none',
     adjustment: 'none',
   });
-  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   
   const handleSync = async () => {
     await syncToCloud();
@@ -73,14 +73,19 @@ export const HomePage: React.FC = () => {
     });
   };
 
-  // 取得所有類別（從交易中）
-  const allCategories = useMemo(() => {
-    const categorySet = new Set<string>();
-    transactions.forEach(t => {
-      if (t.category) categorySet.add(t.category);
-    });
-    return Array.from(categorySet).sort();
-  }, [transactions]);
+  const toggleCategory = (categoryName: string) => {
+    setSelectedCategories(prev =>
+      prev.includes(categoryName)
+        ? prev.filter(c => c !== categoryName)
+        : [...prev, categoryName]
+    );
+  };
+
+  const { expenseCategories, incomeCategories } = useMemo(() => {
+    const expense = categories.filter(c => c.type === 'expense');
+    const income = categories.filter(c => c.type === 'income');
+    return { expenseCategories: expense, incomeCategories: income };
+  }, [categories]);
 
   // 取得包含和排除的類型（共用邏輯）
   const { includeTypes, excludeTypes } = useMemo(() => {
@@ -92,7 +97,7 @@ export const HomePage: React.FC = () => {
   }, [filterTypeStates]);
 
   // 檢查是否有啟用篩選
-  const hasActiveFilter = Object.values(filterTypeStates).some(state => state !== 'none') || filterCategory !== 'all';
+  const hasActiveFilter = Object.values(filterTypeStates).some(state => state !== 'none') || selectedCategories.length > 0;
 
   // 清除篩選
   const clearFilters = () => {
@@ -100,7 +105,7 @@ export const HomePage: React.FC = () => {
     setFilterTypeStates(
       Object.fromEntries(allTypes.map(type => [type, 'none'])) as Record<TransactionType, FilterState>
     );
-    setFilterCategory('all');
+    setSelectedCategories([]);
   };
 
   // Sort and limit transactions
@@ -118,8 +123,8 @@ export const HomePage: React.FC = () => {
     }
     
     // 套用類別篩選
-    if (filterCategory !== 'all') {
-      sourceTransactions = sourceTransactions.filter(t => t.category === filterCategory);
+    if (selectedCategories.length > 0) {
+      sourceTransactions = sourceTransactions.filter(t => t.category && selectedCategories.includes(t.category));
     }
     
     // Sort by date
@@ -131,7 +136,7 @@ export const HomePage: React.FC = () => {
     
     // Apply limit
     return sorted.slice(0, displayLimit);
-  }, [isSearchActive, filteredTransactions, transactions, sortOrder, displayLimit, includeTypes, excludeTypes, filterCategory]);
+  }, [isSearchActive, filteredTransactions, transactions, sortOrder, displayLimit, includeTypes, excludeTypes, selectedCategories]);
 
   // 篩選後的總數
   const filteredCount = useMemo(() => {
@@ -145,11 +150,11 @@ export const HomePage: React.FC = () => {
       source = source.filter(t => !excludeTypes.includes(t.type));
     }
     
-    if (filterCategory !== 'all') {
-      source = source.filter(t => t.category === filterCategory);
+    if (selectedCategories.length > 0) {
+      source = source.filter(t => t.category && selectedCategories.includes(t.category));
     }
     return source.length;
-  }, [isSearchActive, filteredTransactions, transactions, includeTypes, excludeTypes, filterCategory]);
+  }, [isSearchActive, filteredTransactions, transactions, includeTypes, excludeTypes, selectedCategories]);
 
   const totalCount = isSearchActive ? filteredTransactions.length : transactions.length;
   const canLoadMore = displayedTransactions.length < filteredCount;
@@ -237,7 +242,7 @@ export const HomePage: React.FC = () => {
                 篩選
                 {hasActiveFilter && (
                   <span className="bg-blue-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center">
-                    {Object.values(filterTypeStates).filter(state => state !== 'none').length + (filterCategory !== 'all' ? 1 : 0)}
+                    {Object.values(filterTypeStates).filter(state => state !== 'none').length + selectedCategories.length}
                   </span>
                 )}
               </button>
@@ -277,16 +282,44 @@ export const HomePage: React.FC = () => {
                     {/* 類別篩選 */}
                     <div className="mb-3">
                       <label className="text-xs font-medium text-gray-500 mb-1.5 block">類別</label>
-                      <select
-                        value={filterCategory}
-                        onChange={(e) => setFilterCategory(e.target.value)}
-                        className="w-full px-2 py-1.5 text-xs rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="all">全部類別</option>
-                        {allCategories.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
+                      <div className="max-h-32 overflow-y-auto space-y-2">
+                        <div>
+                          <p className="text-xs text-gray-400 my-1">支出</p>
+                          <div className="flex flex-wrap gap-1">
+                            {expenseCategories.map(cat => (
+                              <button
+                                key={cat.id}
+                                onClick={() => toggleCategory(cat.name)}
+                                className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                                  selectedCategories.includes(cat.name)
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                {cat.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 my-1">收入</p>
+                          <div className="flex flex-wrap gap-1">
+                            {incomeCategories.map(cat => (
+                              <button
+                                key={cat.id}
+                                onClick={() => toggleCategory(cat.name)}
+                                className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                                  selectedCategories.includes(cat.name)
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                {cat.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     
                     {/* 清除篩選 */}
@@ -354,14 +387,14 @@ export const HomePage: React.FC = () => {
                 </span>
               );
             })}
-            {filterCategory !== 'all' && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded-full">
-                {filterCategory}
-                <button onClick={() => setFilterCategory('all')} className="hover:text-blue-800">
+            {selectedCategories.map(cat => (
+              <span key={cat} className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded-full">
+                {cat}
+                <button onClick={() => toggleCategory(cat)} className="hover:text-blue-800">
                   <X size={12} />
                 </button>
               </span>
-            )}
+            ))}
           </div>
         )}
         

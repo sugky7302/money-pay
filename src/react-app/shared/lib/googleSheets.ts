@@ -35,7 +35,7 @@ class GoogleSheetsService {
   }
 
   // Callback for token expiration - will be set by AuthContext
-  public onTokenExpired: (() => void) | null = null;
+  public onTokenExpired: (() => Promise<void> | void) | null = null;
 
   private async fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
     const token = this.getAccessToken();
@@ -56,7 +56,7 @@ class GoogleSheetsService {
       // Token expired, trigger re-login
       storage.removeAuthToken();
       if (this.onTokenExpired) {
-        this.onTokenExpired();
+        await this.onTokenExpired();
       }
       throw new Error('登入已過期，請重新登入後再試一次');
     }

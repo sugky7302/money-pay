@@ -1,7 +1,7 @@
 // Reports Page
 
-import React, { useState, useMemo } from 'react';
-import { TrendingUp, TrendingDown, BarChart3, Calendar } from 'lucide-react';
+import { BarChart3, Calendar, TrendingDown, TrendingUp } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
 import { formatCurrency } from '../../shared/lib/utils';
 
@@ -169,7 +169,7 @@ export const ReportsPage: React.FC = () => {
           <p className="text-xs text-gray-400 mt-1">平均 {formatCurrency(avgMonthlyExpense).replace('NT$', '')}/月</p>
         </div>
         
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4 rounded-2xl shadow-sm col-span-2">
+        <div className="bg-linear-to-br from-blue-500 to-blue-600 p-4 rounded-2xl shadow-sm col-span-2">
           <div className="flex items-center gap-2 text-white/80 mb-2">
             <BarChart3 size={16} />
             <span className="text-xs font-medium">淨收支</span>
@@ -308,7 +308,7 @@ export const ReportsPage: React.FC = () => {
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2">
                     <div
-                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all"
+                      className="bg-linear-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all"
                       style={{ width: `${cat.percentage}%` }}
                     />
                   </div>

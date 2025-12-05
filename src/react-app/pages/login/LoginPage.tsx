@@ -9,7 +9,7 @@ export const LoginPage: React.FC = () => {
   const { login } = useAuth();
 
   const handleGoogleSuccess = useCallback(
-    async (tokenResponse: { access_token: string }) => {
+    async (tokenResponse: { access_token: string; expires_in: number }) => {
       try {
         // 使用 access_token 獲取用戶資訊
         const userInfoResponse = await fetch(
@@ -32,7 +32,7 @@ export const LoginPage: React.FC = () => {
         }
 
         // Call the login function from AuthContext
-        login(tokenResponse.access_token, {
+        login(tokenResponse.access_token, tokenResponse.expires_in, {
           name: userInfo.name,
           email: userInfo.email,
           picture: userInfo.picture || "",

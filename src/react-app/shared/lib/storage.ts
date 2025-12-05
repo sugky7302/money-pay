@@ -11,6 +11,7 @@ const STORAGE_KEYS = {
   CURRENCIES: 'cloudbudget_currencies',
   LAST_SYNC: 'cloudbudget_last_sync',
   AUTH_TOKEN: 'cloudbudget_auth_token',
+  AUTH_TOKEN_EXPIRES_AT: 'cloudbudget_auth_token_expires_at',
   USER_INFO: 'cloudbudget_user_info',
   AUTO_SYNC_ENABLED: 'cloudbudget_auto_sync_enabled',
 };
@@ -98,7 +99,12 @@ export const storage = {
   clearAll: (): void => {
     Object.values(STORAGE_KEYS).forEach(key => {
       // Keep auth info
-      if (key !== STORAGE_KEYS.AUTH_TOKEN && key !== STORAGE_KEYS.USER_INFO && key !== STORAGE_KEYS.AUTO_SYNC_ENABLED) {
+      if (
+        key !== STORAGE_KEYS.AUTH_TOKEN &&
+        key !== STORAGE_KEYS.AUTH_TOKEN_EXPIRES_AT &&
+        key !== STORAGE_KEYS.USER_INFO &&
+        key !== STORAGE_KEYS.AUTO_SYNC_ENABLED
+      ) {
         localStorage.removeItem(key);
       }
     });
@@ -115,6 +121,20 @@ export const storage = {
   
   removeAuthToken: (): void => {
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+  },
+
+  getAuthTokenExpiresAt: (): number | null => {
+    const data = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN_EXPIRES_AT);
+    const parsed = data ? Number(data) : NaN;
+    return isNaN(parsed) ? null : parsed;
+  },
+
+  setAuthTokenExpiresAt: (timestamp: number): void => {
+    localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN_EXPIRES_AT, String(timestamp));
+  },
+
+  removeAuthTokenExpiresAt: (): void => {
+    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN_EXPIRES_AT);
   },
   
   getUserInfo: (): { name: string; email: string; picture: string } | null => {

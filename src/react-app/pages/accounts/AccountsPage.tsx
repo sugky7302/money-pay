@@ -50,7 +50,7 @@ export const AccountsPage: React.FC = () => {
         </button>
       </div>
       
-      <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-3xl shadow-xl mb-6">
+      <div className="bg-linear-to-br from-blue-500 to-blue-600 text-white p-6 rounded-3xl shadow-xl mb-6">
         <div className="flex items-center gap-2 mb-2">
           <Wallet size={20} />
           <p className="text-blue-100 text-sm font-medium">總資產</p>
