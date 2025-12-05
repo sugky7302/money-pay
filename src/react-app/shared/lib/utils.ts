@@ -44,7 +44,8 @@ export const calculateAccountBalance = (
       balance -= t.amount;
     } else if (t.type === 'transfer') {
       if (t.fromAccount === account.name) {
-        balance -= t.amount;
+        // 轉出金額 + 手續費
+        balance -= t.amount + (t.fee || 0);
       }
       if (t.toAccount === account.name) {
         balance += t.amount;

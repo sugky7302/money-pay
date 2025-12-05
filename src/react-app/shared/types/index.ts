@@ -14,6 +14,7 @@ export interface Transaction {
   account?: string;
   fromAccount?: string; // For transfers
   toAccount?: string;   // For transfers
+  fee?: number;         // Transfer fee (deducted from source account)
 }
 
 export interface Account {

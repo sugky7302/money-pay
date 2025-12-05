@@ -176,12 +176,22 @@ export const TransactionList: React.FC<TransactionListProps> = ({ transactions, 
             {/* Details */}
             <div className="bg-gray-50 rounded-xl p-4 space-y-3">
               {selectedTransaction.type === 'transfer' ? (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">帳戶</span>
-                  <span className="text-gray-800 font-medium">
-                    {selectedTransaction.fromAccount} → {selectedTransaction.toAccount}
-                  </span>
-                </div>
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">帳戶</span>
+                    <span className="text-gray-800 font-medium">
+                      {selectedTransaction.fromAccount} → {selectedTransaction.toAccount}
+                    </span>
+                  </div>
+                  {selectedTransaction.fee && selectedTransaction.fee > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">手續費</span>
+                      <span className="text-orange-600 font-medium">
+                        {formatCurrency(selectedTransaction.fee)}
+                      </span>
+                    </div>
+                  )}
+                </>
               ) : (
                 <>
                   <div className="flex justify-between">
