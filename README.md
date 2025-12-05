@@ -24,10 +24,22 @@ This template provides a minimal setup for building a React application with Typ
 - 🎯 API routes with Hono's elegant routing
 - 🔄 Full-stack development setup
 - 🔎 Built-in Observability to monitor your Worker
+- 🔐 Google OAuth authentication for secure user login
 
 Get started in minutes with local development or deploy directly via the Cloudflare dashboard. Perfect for building modern, performant web applications at the edge.
 
 <!-- dash-content-end -->
+
+## Prerequisites
+
+Before you begin, you'll need to set up Google OAuth 2.0 authentication:
+
+1. Create a Google Cloud Project
+2. Enable Google Sign-In API
+3. Create OAuth 2.0 credentials
+4. Configure your Client ID
+
+For detailed instructions, see [GOOGLE_OAUTH_SETUP.md](./GOOGLE_OAUTH_SETUP.md).
 
 ## Getting Started
 
@@ -47,6 +59,18 @@ Install dependencies:
 ```bash
 npm install
 ```
+
+Configure Google OAuth (required):
+
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Edit .env and add your Google Client ID
+# VITE_GOOGLE_CLIENT_ID=your-actual-client-id-here.apps.googleusercontent.com
+```
+
+See [GOOGLE_OAUTH_SETUP.md](./GOOGLE_OAUTH_SETUP.md) for detailed setup instructions.
 
 Start the development server with:
 
