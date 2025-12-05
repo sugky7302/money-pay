@@ -6,11 +6,13 @@ import { useAppContext } from '../../app/AppContext';
 import { AccountForm } from '../../features/account-form/AccountForm';
 import { BalanceAdjustmentForm } from '../../features/balance-adjustment/BalanceAdjustmentForm';
 import { calculateTotalBalance, formatCurrency } from '../../shared/lib/utils';
+import { useUIStore } from '../../shared/stores/useUIStore';
 import { Account } from '../../shared/types';
 import { AccountList } from '../../widgets/account-list/AccountList';
 
 export const AccountsPage: React.FC = () => {
   const { accounts, transactions } = useAppContext();
+  const { setAccountFormOpen } = useUIStore();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAdjustModal, setShowAdjustModal] = useState(false);
@@ -24,6 +26,7 @@ export const AccountsPage: React.FC = () => {
   const handleEdit = (account: Account) => {
     setEditingAccount(account);
     setShowEditModal(true);
+    setAccountFormOpen(true);
   };
 
   const handleAdjust = (account: Account, currentBalance: number) => {
@@ -37,7 +40,10 @@ export const AccountsPage: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">帳戶管理</h1>
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={() => {
+            setShowAddModal(true);
+            setAccountFormOpen(true);
+          }}
           className="bg-blue-600 text-white p-2 rounded-full shadow-lg hover:bg-blue-700 transition-colors active:scale-95"
         >
           <Plus size={24} />
@@ -66,7 +72,10 @@ export const AccountsPage: React.FC = () => {
           <Wallet size={48} className="mx-auto mb-3 opacity-20" />
           <p className="mb-4">還沒有帳戶</p>
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => {
+              setShowAddModal(true);
+              setAccountFormOpen(true);
+            }}
             className="bg-blue-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-blue-700 transition-colors"
           >
             新增第一個帳戶
@@ -78,7 +87,10 @@ export const AccountsPage: React.FC = () => {
       
       <AccountForm 
         isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        onClose={() => {
+          setShowAddModal(false);
+          setAccountFormOpen(false);
+        }}
         mode="add"
       />
       
@@ -87,6 +99,7 @@ export const AccountsPage: React.FC = () => {
         onClose={() => {
           setShowEditModal(false);
           setEditingAccount(undefined);
+          setAccountFormOpen(false);
         }}
         account={editingAccount}
         mode="edit"

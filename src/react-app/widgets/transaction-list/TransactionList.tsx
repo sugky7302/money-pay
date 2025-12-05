@@ -191,6 +191,24 @@ export const TransactionList: React.FC<TransactionListProps> = ({ transactions, 
                       </span>
                     </div>
                   )}
+                  {selectedTransaction.exchangeRate && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">匯率</span>
+                        <span className="text-gray-800 font-medium">
+                          {selectedTransaction.exchangeRate.toFixed(4)}
+                        </span>
+                      </div>
+                      {selectedTransaction.toAmount && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">實際轉入</span>
+                          <span className="text-blue-600 font-medium">
+                            {selectedTransaction.toAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </>
               ) : (
                 <>

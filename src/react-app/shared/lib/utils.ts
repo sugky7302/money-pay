@@ -48,7 +48,8 @@ export const calculateAccountBalance = (
         balance -= t.amount + (t.fee || 0);
       }
       if (t.toAccount === account.name) {
-        balance += t.amount;
+        // 跨幣別轉帳使用 toAmount，否則使用 amount
+        balance += t.toAmount ?? t.amount;
       }
     } else if (t.type === 'adjustment' && t.account === account.name) {
       // 校正金額可正可負

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
 import { generateId } from '../../shared/lib/utils';
-import { Account } from '../../shared/types';
+import { Account, Currency, CURRENCY_NAMES } from '../../shared/types';
 import { Button } from '../../shared/ui/Button';
 import { Input } from '../../shared/ui/Input';
 import { Modal } from '../../shared/ui/Modal';
@@ -24,6 +24,11 @@ const ACCOUNT_TYPES = [
   { value: 'other', label: '其他' },
 ];
 
+const CURRENCY_OPTIONS = (Object.keys(CURRENCY_NAMES) as Currency[]).map(code => ({
+  value: code,
+  label: `${CURRENCY_NAMES[code]} (${code})`,
+}));
+
 const COLORS = [
   '#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', 
   '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
@@ -41,18 +46,23 @@ export const AccountForm: React.FC<AccountFormProps> = ({
     name: '',
     type: 'cash',
     balance: 0,
+    currency: 'TWD',
     color: COLORS[0],
   });
   
   useEffect(() => {
     const loadFormData = () => {
       if (account && mode === 'edit') {
-        setFormData(account);
+        setFormData({
+          ...account,
+          currency: account.currency || 'TWD', // 相容舊資料
+        });
       } else {
         setFormData({
           name: '',
           type: 'cash',
           balance: 0,
+          currency: 'TWD',
           color: COLORS[0],
         });
       }
@@ -73,6 +83,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
         name: formData.name,
         type: formData.type as Account['type'],
         balance: Number(formData.balance) || 0,
+        currency: formData.currency as Currency || 'TWD',
         color: formData.color,
       };
       addAccount(newAccount);
@@ -100,6 +111,13 @@ export const AccountForm: React.FC<AccountFormProps> = ({
           options={ACCOUNT_TYPES}
           value={formData.type}
           onChange={(e) => setFormData({...formData, type: e.target.value as Account['type']})}
+        />
+        
+        <Select
+          label="幣別"
+          options={CURRENCY_OPTIONS}
+          value={formData.currency}
+          onChange={(e) => setFormData({...formData, currency: e.target.value as Currency})}
         />
         
         <Input

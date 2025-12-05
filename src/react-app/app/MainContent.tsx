@@ -23,7 +23,7 @@ export const MainContent: React.FC = () => {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showTransferForm, setShowTransferForm] = useState(false);
-  const { isSearchModalOpen, isManagementModalOpen } = useUIStore();
+  const { isAnyModalOpen } = useUIStore();
 
   // Render active page
   const renderPage = () => {
@@ -59,7 +59,7 @@ export const MainContent: React.FC = () => {
           {renderPage()}
         </div>
 
-        {!isManagementModalOpen && !isSearchModalOpen && (
+        {!isAnyModalOpen() && (
           <TabBar
             activeTab={activeTab}
             setActiveTab={setActiveTab}
