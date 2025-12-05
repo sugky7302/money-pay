@@ -1,4 +1,8 @@
-/* Global styles for the budgeting app - using inline Tailwind-like utility classes */
+/* Global styles for the budgeting app - using Tailwind CSS */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 * {
   box-sizing: border-box;
