@@ -182,7 +182,7 @@ export const HomePage: React.FC = () => {
   
   return (
     <div className="pb-24">
-      <header ref={headerRef} className="px-6 pt-12 pb-6 bg-gradient-to-b from-gray-50 to-gray-100 sticky top-0 z-20">
+      <header ref={headerRef} className="px-6 pt-12 pb-6 bg-gray-50 sticky top-0 z-20">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">我的資產</h1>
           <div className="flex gap-2">
@@ -216,7 +216,7 @@ export const HomePage: React.FC = () => {
 
       <div className="px-6">
         <div 
-          className="flex justify-between items-center py-2 mb-4 sticky z-10 bg-white/90 backdrop-blur border-b border-gray-100"
+          className="flex justify-between items-center py-2 mb-4 sticky z-10 bg-gray-50 opacity-90"
           style={{ top: headerHeight }}
         >
           <h3 className="text-lg font-bold text-gray-800">
