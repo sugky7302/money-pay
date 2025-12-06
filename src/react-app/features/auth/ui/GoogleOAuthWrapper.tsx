@@ -1,4 +1,12 @@
-// Google OAuth Provider Wrapper
+/**
+ * GoogleOAuthWrapper.tsx - Google OAuth 提供者包裝組件
+ *
+ * 功能說明：
+ * 1. 從後端載入 Google Client ID 設定
+ * 2. 顯示載入中狀態
+ * 3. 處理設定錯誤（缺少 Client ID）
+ * 4. 提供 GoogleOAuthProvider 給子組件
+ */
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import React from "react";

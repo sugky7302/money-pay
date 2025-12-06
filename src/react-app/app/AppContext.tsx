@@ -1,4 +1,16 @@
-// App context for state management
+/**
+ * AppContext.tsx - 應用程式狀態管理
+ *
+ * 功能說明：
+ * 1. 管理交易記錄 CRUD
+ * 2. 管理帳戶 CRUD
+ * 3. 管理分類、標籤、商家、幣別 CRUD
+ * 4. 本機儲存（localStorage）
+ * 5. 雲端同步（Google Sheets）
+ * 6. 自動同步功能（防抖動、最小間隔限制）
+ * 7. 資料備份下載（JSON 檔案）
+ * 8. 清除所有資料
+ */
 
 import React, {
     createContext,
@@ -11,6 +23,7 @@ import React, {
 } from "react";
 import { googleSheetsService, storage, useConfig } from "../shared/lib";
 import { Account, Category, Currency, Merchant, Tag, Transaction } from "../shared/types";
+import { useToast } from "./ToastContext";
 
 interface AppContextType {
   // State
@@ -70,6 +83,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
   const { config } = useConfig();
+  const { showToast } = useToast();
 
   // Auto-sync debounce delay (30 seconds to avoid rate limiting)
   const AUTO_SYNC_DELAY = config?.autoSyncDelay ?? 30000;
@@ -359,10 +373,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       setLastSyncTime(timeStr);
       storage.setLastSync(timeStr);
 
-      alert("已成功同步到 Google Drive！");
+      showToast("已成功同步到 Google Drive！", 'success');
     } catch (error) {
       console.error("Sync to cloud failed:", error);
-      alert(`同步失敗：${error instanceof Error ? error.message : "未知錯誤"}`);
+      showToast(`同步失敗：${error instanceof Error ? error.message : "未知錯誤"}`, 'error');
     } finally {
       setIsSyncing(false);
     }
@@ -393,13 +407,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         setLastSyncTime(timeStr);
         storage.setLastSync(timeStr);
 
-        alert("已成功從 Google Drive 載入資料！");
+        showToast("已成功從 Google Drive 載入資料！", 'success');
       } else {
-        alert("Google Drive 中尚無備份資料");
+        showToast("Google Drive 中尚無備份資料", 'info');
       }
     } catch (error) {
       console.error("Load from cloud failed:", error);
-      alert(`載入失敗：${error instanceof Error ? error.message : "未知錯誤"}`);
+      showToast(`載入失敗：${error instanceof Error ? error.message : "未知錯誤"}`, 'error');
     } finally {
       setIsSyncing(false);
     }
@@ -430,7 +444,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Failed to download backup', err);
-      alert('下載備份失敗，請稍後再試');
+      showToast('下載備份失敗，請稍後再試', 'error');
     }
   };
 
@@ -495,3 +509,4 @@ export const useAppContext = () => {
   }
   return context;
 };
+

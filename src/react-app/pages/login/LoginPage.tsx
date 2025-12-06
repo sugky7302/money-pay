@@ -1,14 +1,33 @@
-// Login Page with Google Sign-In
+/**
+ * LoginPage.tsx - 登入頁面
+ * 
+ * 功能說明：
+ * 1. 顯示 Google 登入按鈕
+ * 2. 處理 Google OAuth 登入流程
+ * 3. 處理 redirect flow 回傳的 Token
+ * 4. 取得使用者資訊並完成登入
+ * 5. 顯示登入錯誤訊息
+ */
 
 import { useGoogleLogin } from "@react-oauth/google";
 import { Wallet } from "lucide-react";
 import React, { useCallback, useEffect } from "react";
 import { useAuth } from "../../app/AuthContext";
+import { useToast } from "../../app/ToastContext";
 
+/**
+ * 登入頁面組件
+ * 提供 Google OAuth 登入功能
+ * @returns 登入頁面 UI
+ */
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
+  const { showToast } = useToast();
 
-  // 處理 redirect flow 回來時 URL hash 中的 token
+  /**
+   * 處理 redirect flow 回來時 URL hash 中的 Token
+   * 在頁面載入時檢查是否有 access_token
+   */
   useEffect(() => {
     const hash = window.location.hash;
     if (hash && hash.includes('access_token')) {
@@ -63,17 +82,17 @@ export const LoginPage: React.FC = () => {
         console.error("Error during Google Sign-In:", error);
         const errorMessage =
           error instanceof Error ? error.message : "登入失敗";
-        alert(`登入失敗：${errorMessage}。請稍後再試或聯絡系統管理員。`);
+        showToast(`登入失敗：${errorMessage}。請稍後再試或聯絡系統管理員。`, 'error');
       }
     },
-    [login]
+    [login, showToast]
   );
 
   const googleLogin = useGoogleLogin({
     onSuccess: handleGoogleSuccess,
     onError: () => {
       console.error("Google Sign-In failed");
-      alert("Google 登入失敗，請稍後再試。");
+      showToast("Google 登入失敗，請稍後再試。", 'error');
     },
     scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets',
     flow: 'implicit',

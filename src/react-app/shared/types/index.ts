@@ -1,6 +1,6 @@
 /**
  * types/index.ts - 共用類型定義
- * 
+ *
  * 功能說明：
  * 1. 定義交易類型（TransactionType）
  * 2. 定義幣別介面（Currency）
@@ -17,7 +17,6 @@ export type TransactionType = 'expense' | 'income' | 'transfer' | 'adjustment';
 
 /** 幣別介面 */
 export interface Currency {
-export interface Currency {
   id: number;
   code: string;    // 幣別代碼，例如：TWD, USD
   name: string;    // 幣別名稱，例如：新台幣, 美元
@@ -25,7 +24,6 @@ export interface Currency {
 }
 
 /** 交易記錄介面 */
-export interface Transaction {
 export interface Transaction {
   id: number;
   type: TransactionType;
@@ -45,7 +43,6 @@ export interface Transaction {
 
 /** 帳戶介面 */
 export interface Account {
-export interface Account {
   id: number;
   name: string;
   type: 'bank' | 'cash' | 'e-wallet' | 'credit-card' | 'other';
@@ -58,7 +55,6 @@ export interface Account {
 }
 
 /** 分類介面 */
-export interface Category {
 export interface Category {
   id: number;
   name: string;

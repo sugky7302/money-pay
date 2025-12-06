@@ -1,4 +1,13 @@
-// Search Feature
+/**
+ * Search.tsx - 搜尋功能組件
+ *
+ * 功能說明：
+ * 1. 根據日期範圍篩選交易
+ * 2. 根據分類篩選交易
+ * 3. 根據標籤篩選交易
+ * 4. 根據金額範圍篩選交易
+ * 5. 回傳符合條件的交易結果
+ */
 
 import React, { useState } from 'react';
 import { Transaction, SearchFilters } from '../../shared/types';

@@ -1,8 +1,17 @@
-// Tag Form Feature
+/**
+ * TagForm.tsx - 標籤管理表單組件
+ *
+ * 功能說明：
+ * 1. 顯示現有標籤列表
+ * 2. 新增標籤（指定名稱和顏色）
+ * 3. 刪除標籤（確認後刪除）
+ * 4. 提供 10 種預設顏色選擇
+ */
 
 import { Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
+import { useToast } from '../../app/ToastContext';
 import { generateId } from '../../shared/lib/utils';
 import { Tag } from '../../shared/types';
 import { Button } from '../../shared/ui/Button';
@@ -21,6 +30,7 @@ const TAG_COLORS = [
 
 export const TagForm: React.FC<TagFormProps> = ({ isOpen, onClose }) => {
   const { tags, addTag, deleteTag } = useAppContext();
+  const { showToast } = useToast();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -29,7 +39,7 @@ export const TagForm: React.FC<TagFormProps> = ({ isOpen, onClose }) => {
   
   const handleSubmit = () => {
     if (!formData.name) {
-      alert('請輸入標籤名稱');
+      showToast('請輸入標籤名稱', 'error');
       return;
     }
     

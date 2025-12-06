@@ -1,4 +1,13 @@
-// Transaction List Widget
+/**
+ * TransactionList.tsx - 交易列表組件
+ *
+ * 功能說明：
+ * 1. 顯示交易記錄列表
+ * 2. 根據交易類型顯示不同圖示和顏色
+ * 3. 點擊交易顯示詳細資訊彈窗
+ * 4. 支援編輯和刪除交易
+ * 5. 顯示標籤、備註、帳戶、商家資訊
+ */
 
 import { ArrowDownCircle, ArrowLeftRight, ArrowUpCircle, Edit, Scale, Trash2, X } from 'lucide-react';
 import React, { useState } from 'react';

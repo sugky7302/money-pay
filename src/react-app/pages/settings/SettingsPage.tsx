@@ -1,4 +1,15 @@
-// Settings Page
+/**
+ * SettingsPage.tsx - 設定頁面
+ *
+ * 功能說明：
+ * 1. 顯示使用者登入資訊
+ * 2. 雲端同步功能（上傳/下載資料到 Google Sheets）
+ * 3. 自動同步開關
+ * 4. 本機資料備份（下載 JSON 檔案）
+ * 5. 管理分類、標籤、商家、幣別
+ * 6. 清除所有資料
+ * 7. 登出功能
+ */
 
 import { AlertCircle, Cloud, Download, FolderPlus, LogOut, Plus, RefreshCw, Store, Tag, Upload, User, Zap, DollarSign } from 'lucide-react';
 import React, { useState } from 'react';

@@ -1,8 +1,16 @@
-// Merchant Form Feature
+/**
+ * MerchantForm.tsx - 商家管理表單組件
+ *
+ * 功能說明：
+ * 1. 顯示現有商家列表
+ * 2. 新增商家（輸入名稱）
+ * 3. 刪除商家（確認後刪除）
+ */
 
 import { Store, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
+import { useToast } from '../../app/ToastContext';
 import { generateId } from '../../shared/lib/utils';
 import { Merchant } from '../../shared/types';
 import { Button } from '../../shared/ui/Button';
@@ -16,12 +24,13 @@ interface MerchantFormProps {
 
 export const MerchantForm: React.FC<MerchantFormProps> = ({ isOpen, onClose }) => {
   const { merchants, addMerchant, deleteMerchant } = useAppContext();
+  const { showToast } = useToast();
   
   const [name, setName] = useState('');
   
   const handleSubmit = () => {
     if (!name.trim()) {
-      alert('請輸入商家名稱');
+      showToast('請輸入商家名稱', 'error');
       return;
     }
     

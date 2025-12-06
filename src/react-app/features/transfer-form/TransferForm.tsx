@@ -1,7 +1,18 @@
-// Transfer Form Feature
+/**
+ * TransferForm.tsx - 轉帳表單組件
+ *
+ * 功能說明：
+ * 1. 帳戶間轉帳操作
+ * 2. 支援跨幣別轉帳（自動計算匯率）
+ * 3. 手續費設定
+ * 4. 顯示帳戶可用餘額
+ * 5. 選擇標籤和備註
+ * 6. 自動建立轉出/轉入/手續費交易記錄
+ */
 
 import React, { useMemo, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
+import { useToast } from '../../app/ToastContext';
 import { calculateAccountBalance, generateId, getCurrentDate } from '../../shared/lib/utils';
 import { Transaction } from '../../shared/types';
 import { Button } from '../../shared/ui/Button';
@@ -16,6 +27,7 @@ interface TransferFormProps {
 
 export const TransferForm: React.FC<TransferFormProps> = ({ isOpen, onClose }) => {
   const { accounts, tags, transactions, addTransaction, currencies } = useAppContext();
+  const { showToast } = useToast();
   
   const [formData, setFormData] = useState({
     fromAccount: accounts.length > 0 ? accounts[0].name : '',
@@ -70,7 +82,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({ isOpen, onClose }) =
     if (!formData.amount || formData.amount <= 0) return;
     if (!formData.fromAccount || !formData.toAccount) return;
     if (formData.fromAccount === formData.toAccount) {
-      alert('轉出帳戶和轉入帳戶不能相同');
+      showToast('轉出帳戶和轉入帳戶不能相同', 'error');
       return;
     }
     

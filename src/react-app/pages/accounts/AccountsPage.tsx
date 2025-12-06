@@ -1,4 +1,14 @@
-// Accounts Page
+/**
+ * AccountsPage.tsx - 帳戶管理頁面
+ * 
+ * 功能說明：
+ * 1. 顯示所有帳戶列表
+ * 2. 顯示總資產統計
+ * 3. 新增帳戶功能
+ * 4. 編輯帳戶功能
+ * 5. 刪除帳戶功能
+ * 6. 帳戶餘額校正功能
+ */
 
 import { Plus, Wallet } from 'lucide-react';
 import React, { useState } from 'react';
@@ -10,6 +20,10 @@ import { useUIStore } from '../../shared/stores/useUIStore';
 import { Account } from '../../shared/types';
 import { AccountList } from '../../widgets/account-list/AccountList';
 
+/**
+ * 帳戶管理頁面組件
+ * @returns 帳戶管理頁面 UI
+ */
 export const AccountsPage: React.FC = () => {
   const { accounts, transactions } = useAppContext();
   const { setAccountFormOpen } = useUIStore();

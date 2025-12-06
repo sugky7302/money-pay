@@ -1,5 +1,12 @@
 /**
- * useConfig - 從 Vite 環境變數取得設定，若無則 fallback 到 Worker API
+ * useConfig.ts - 設定載入 Hook
+ *
+ * 功能說明：
+ * 1. 從 Vite 環境變數取得設定（優先）
+ * 2. 若環境變數不完整，fallback 到 Worker API
+ * 3. 提供設定快取避免重複請求
+ * 4. 回傳載入狀態和錯誤資訊
+ * 5. 設定包含：Google Client ID、自動同步延遲、最小同步間隔
  */
 import { useEffect, useState } from "react";
 

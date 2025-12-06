@@ -1,4 +1,13 @@
-/* Global styles for the budgeting app - using Tailwind CSS v4 */
+/**
+ * index.css - 全域樣式表
+ *
+ * 功能說明：
+ * 1. 引入 Tailwind CSS v4
+ * 2. 設定全域字體和顏色
+ * 3. 自訂安全區域間距 (Safe Area)
+ * 4. 設定滾動行為和文字選取樣式
+ */
+
 @import "tailwindcss";
 
 :root {

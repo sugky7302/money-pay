@@ -12,6 +12,7 @@ import { GoogleOAuthWrapper } from "../features/auth/ui/GoogleOAuthWrapper";
 import { AppContent } from "./AppContent";
 import { AppProvider } from "./AppContext";
 import { AuthProvider } from "./AuthContext";
+import { ToastProvider } from "./ToastContext";
 
 /**
  * 主應用程式組件
@@ -22,9 +23,11 @@ export default function App() {
   return (
     <GoogleOAuthWrapper>
       <AuthProvider>
-        <AppProvider>
-          <AppContent />
-        </AppProvider>
+        <ToastProvider>
+          <AppProvider>
+            <AppContent />
+          </AppProvider>
+        </ToastProvider>
       </AuthProvider>
     </GoogleOAuthWrapper>
   );

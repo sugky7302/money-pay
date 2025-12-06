@@ -1,4 +1,12 @@
-// Invoice Scan Component
+/**
+ * InvoiceScan.tsx - 發票掃描組件
+ *
+ * 功能說明：
+ * 1. 使用相機掃描發票 QR Code
+ * 2. 支援台灣電子發票雙 QR Code 格式
+ * 3. 自動合併左右兩個 QR Code 資料
+ * 4. 顯示掃描狀態和錯誤訊息
+ */
 
 import { Scanner } from '@yudiel/react-qr-scanner';
 import { X } from 'lucide-react';

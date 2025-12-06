@@ -1,5 +1,14 @@
-// Google Sheets API service for reading and writing data to Google Drive
-// Requires scope: https://www.googleapis.com/auth/drive.file
+/**
+ * googleSheets.ts - Google Sheets API 服務
+ *
+ * 功能說明：
+ * 1. 在 Google Drive 建立專屬資料夾 (cloudbudget)
+ * 2. 建立/讀取試算表 (cloudbudget-data)
+ * 3. 將資料寫入各個工作表（交易、帳戶、分類等）
+ * 4. 從試算表讀取資料
+ * 5. 清理工作表資料並重新寫入
+ * 6. 處理 Google API 認證和錯誤
+ */
 
 import { Account, Category, Currency, Merchant, Tag, Transaction } from '../types';
 import { storage } from './storage';

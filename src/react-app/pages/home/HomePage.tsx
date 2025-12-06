@@ -1,4 +1,15 @@
-// Home Page
+/**
+ * HomePage.tsx - 首頁
+ * 
+ * 功能說明：
+ * 1. 顯示總餘額和本月收支摘要
+ * 2. 顯示交易記錄列表
+ * 3. 提供交易篩選功能（類型、排序）
+ * 4. 提供交易搜尋功能
+ * 5. 提供雲端備份快捷按鈕
+ * 6. 支援無限滾動載入更多交易
+ * 7. 提供交易編輯功能
+ */
 
 import { ArrowDownUp, Cloud, CreditCard, Filter, RefreshCw, Search as SearchIcon, X } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -10,10 +21,14 @@ import { Transaction, TransactionType } from '../../shared/types';
 import { BalanceCard } from '../../widgets/balance-card/BalanceCard';
 import { TransactionList } from '../../widgets/transaction-list/TransactionList';
 
+/** 排序方式 */
 type SortOrder = 'newest' | 'oldest';
+/** 篩選狀態 */
 type FilterState = 'none' | 'include' | 'exclude';
+/** 每頁顯示數量 */
 const PAGE_SIZE = 20;
 
+/** 交易類型標籤 */
 const TYPE_LABELS: Record<TransactionType, string> = {
   expense: '支出',
   income: '收入',
@@ -21,6 +36,11 @@ const TYPE_LABELS: Record<TransactionType, string> = {
   adjustment: '校正',
 };
 
+/**
+ * 首頁組件
+ * 顯示使用者的財務概覽和交易記錄
+ * @returns 首頁 UI
+ */
 export const HomePage: React.FC = () => {
   const { transactions, categories, lastSyncTime, syncToCloud, isSyncing } = useAppContext();
   const { isSearchModalOpen, setSearchModalOpen } = useUIStore();

@@ -1,4 +1,14 @@
-// Account List Widget
+/**
+ * AccountList.tsx - 帳戶列表組件
+ *
+ * 功能說明：
+ * 1. 顯示所有帳戶列表（依類型分組）
+ * 2. 支援拖曳排序（觸控/滑鼠）
+ * 3. 收合/展開帳戶分組
+ * 4. 顯示帳戶餘額和類型
+ * 5. 支援編輯、刪除、餘額校正操作
+ * 6. 記住排序和分組展開狀態
+ */
 
 import { ChevronDown, Edit, Folder, Scale, Trash2, Wallet } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -193,6 +203,7 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
     <div className="space-y-4">
       {groupedAccounts.map(({ name, accounts: groupAccounts }) => {
         const groupBalance = groupAccounts.reduce((total, account) => {
+          if (account.type === 'credit-card' || account.isVirtual) return total; // 信用卡/虛擬帳戶不計入群組總額
           return total + calculateAccountBalance(account, transactions);
         }, 0);
         const isCollapsed = collapsedGroups[name] ?? false;

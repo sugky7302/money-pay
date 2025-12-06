@@ -1,4 +1,14 @@
-// Authentication context for managing user authentication state
+/**
+ * AuthContext.tsx - 認證狀態管理
+ *
+ * 功能說明：
+ * 1. 管理使用者登入狀態
+ * 2. 儲存和驗證 Google OAuth Token
+ * 3. 自動刷新即將過期的 Token
+ * 4. 提供登入/登出功能
+ * 5. 儲存使用者資訊（名稱、信箱、頭像）
+ * 6. 處理 URL hash 中的 OAuth redirect 回應
+ */
 
 import React, { createContext, ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { googleSheetsService, storage } from '../shared/lib';
@@ -145,7 +155,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    // Provide a safe fallback to avoid hard crashes if a provider is missing (e.g., in storybook/tests)
+    console.warn('useAuth called outside of AuthProvider - returning guest context');
+    return {
+      isAuthenticated: false,
+      userInfo: null,
+      isLoading: false,
+      login: () => console.warn('login called outside of AuthProvider'),
+      logout: () => console.warn('logout called outside of AuthProvider'),
+    } as AuthContextType;
   }
   return context;
 };

@@ -1,4 +1,12 @@
-// Balance Adjustment Form
+/**
+ * BalanceAdjustmentForm.tsx - 餘額校正表單組件
+ *
+ * 功能說明：
+ * 1. 調整帳戶實際餘額
+ * 2. 顯示當前餘額和差異
+ * 3. 自動建立校正交易記錄
+ * 4. 支援備註輸入
+ */
 
 import { Scale } from 'lucide-react';
 import React, { useEffect, useState } from 'react';

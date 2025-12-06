@@ -1,8 +1,17 @@
-// Currency Form Feature
+/**
+ * CurrencyForm.tsx - 幣別管理表單組件
+ *
+ * 功能說明：
+ * 1. 顯示現有幣別列表
+ * 2. 新增幣別（代碼、名稱、符號）
+ * 3. 編輯幣別資訊
+ * 4. 刪除幣別（確認後刪除）
+ */
 
 import { Pencil, Trash2 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../app/AppContext';
+import { useToast } from '../../app/ToastContext';
 import { generateId } from '../../shared/lib/utils';
 import { Currency } from '../../shared/types';
 import { Button } from '../../shared/ui/Button';
@@ -16,6 +25,7 @@ interface CurrencyFormProps {
 
 export const CurrencyForm: React.FC<CurrencyFormProps> = ({ isOpen, onClose }) => {
   const { currencies, addCurrency, updateCurrency, deleteCurrency } = useAppContext();
+  const { showToast } = useToast();
   
   const [formData, setFormData] = useState<Partial<Currency>>({
     code: '',
@@ -38,7 +48,7 @@ export const CurrencyForm: React.FC<CurrencyFormProps> = ({ isOpen, onClose }) =
   
   const handleSubmit = () => {
     if (!formData.code || !formData.name || !formData.symbol) {
-      alert('請填寫所有欄位');
+      showToast('請填寫所有欄位', 'error');
       return;
     }
     

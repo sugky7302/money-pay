@@ -1,4 +1,10 @@
-// Default data for the application
+/**
+ * defaults.ts - 預設資料
+ *
+ * 功能說明：
+ * 1. 提供交易、帳戶、分類的預設空陣列
+ * 2. 作為應用程式初始化時的預設值
+ */
 
 import { Account, Category, Transaction } from '../types';
 

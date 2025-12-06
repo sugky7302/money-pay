@@ -1,8 +1,17 @@
-// Category Form Feature
+/**
+ * CategoryForm.tsx - 分類管理表單組件
+ *
+ * 功能說明：
+ * 1. 顯示現有分類列表（收入/支出）
+ * 2. 新增分類（指定名稱和類型）
+ * 3. 刪除分類（確認後刪除）
+ * 4. 切換顯示收入/支出分類
+ */
 
 import { Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
+import { useToast } from '../../app/ToastContext';
 import { generateId } from '../../shared/lib/utils';
 import { Category } from '../../shared/types';
 import { Button } from '../../shared/ui/Button';
@@ -16,6 +25,7 @@ interface CategoryFormProps {
 
 export const CategoryForm: React.FC<CategoryFormProps> = ({ isOpen, onClose }) => {
   const { categories, addCategory, deleteCategory } = useAppContext();
+  const { showToast } = useToast();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -24,7 +34,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ isOpen, onClose }) =
   
   const handleSubmit = () => {
     if (!formData.name) {
-      alert('請輸入分類名稱');
+      showToast('請輸入分類名稱', 'error');
       return;
     }
     

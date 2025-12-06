@@ -1,4 +1,12 @@
-// Add Menu Component
+/**
+ * AddMenu.tsx - 新增選單組件
+ *
+ * 功能說明：
+ * 1. 顯示底部彈出的新增選單
+ * 2. 提供三種新增操作：交易、轉帳、發票掃描
+ * 3. 點擊背景可關閉選單
+ * 4. 動畫效果顯示/隱藏
+ */
 
 import { ArrowLeftRight, Plus, QrCode, Landmark } from "lucide-react";
 import React from "react";

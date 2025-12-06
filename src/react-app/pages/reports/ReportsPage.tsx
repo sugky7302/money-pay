@@ -1,10 +1,22 @@
-// Reports Page
+/**
+ * ReportsPage.tsx - 報表頁面
+ * 
+ * 功能說明：
+ * 1. 顯示收支統計摘要
+ * 2. 提供月份/時間範圍選擇
+ * 3. 顯示分類支出排行
+ * 4. 計算平均月支出/收入
+ * 5. 顯示淨收支狀況
+ * 6. 支援自訂時間範圍
+ */
 
-import { BarChart3, Calendar, TrendingDown, TrendingUp } from 'lucide-react';
+import { BarChart3, Calendar, TrendingDown, TrendingUp, PieChart, List, Tags as TagsIcon } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
 import { formatCurrency } from '../../shared/lib/utils';
+import { CategoryPieChart } from './ui/CategoryPieChart';
 
+/** 月度資料介面 */
 interface MonthlyData {
   month: string;
   income: number;
@@ -12,14 +24,24 @@ interface MonthlyData {
   balance: number;
 }
 
+/** 分類資料介面 */
 interface CategoryData {
   category: string;
   amount: number;
   percentage: number;
 }
 
+/** 排序選項 */
 type SortOption = 'month' | 'income' | 'expense' | 'balance';
 
+type CategoryView = 'list' | 'pie';
+type TagView = 'list' | 'pie';
+
+/**
+ * 報表頁面組件
+ * 顯示收支統計和分析
+ * @returns 報表頁面 UI
+ */
 export const ReportsPage: React.FC = () => {
   const { transactions, accounts } = useAppContext();
   const [selectedPeriod, setSelectedPeriod] = useState<'6months' | '12months' | 'custom'>('6months');
@@ -33,6 +55,8 @@ export const ReportsPage: React.FC = () => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
   });
   const [sortBy, setSortBy] = useState<SortOption>('month');
+  const [categoryView, setCategoryView] = useState<CategoryView>('list');
+  const [tagView, setTagView] = useState<TagView>('list');
 
   const filteredTransactions = useMemo(() => {
     const creditCardAccountNames = accounts
@@ -143,7 +167,7 @@ export const ReportsPage: React.FC = () => {
   }, [filteredTransactions, parsedMonthRange, sortBy]);
   
   // Calculate top expense categories for the selected period
-  const topExpenseCategories = useMemo((): CategoryData[] => {
+  const { categoryTotalsList, categoryTotalExpense } = useMemo(() => {
     const categoryTotals: { [key: string]: number } = {};
     let totalExpense = 0;
     
@@ -160,16 +184,61 @@ export const ReportsPage: React.FC = () => {
       }
     });
     
-    const categories = Object.entries(categoryTotals)
-      .map(([category, amount]) => ({
-        category,
-        amount,
-        percentage: totalExpense > 0 ? (amount / totalExpense) * 100 : 0,
+    const categoryTotalsList = Object.entries(categoryTotals)
+      .map(([category, amount]) => ({ category, amount }))
+      .sort((a, b) => b.amount - a.amount);
+
+    return { categoryTotalsList, categoryTotalExpense: totalExpense };
+  }, [filteredTransactions, parsedMonthRange]);
+
+  const topExpenseCategories = useMemo((): CategoryData[] => {
+    return categoryTotalsList.slice(0, 5).map((item) => ({
+      ...item,
+      percentage: categoryTotalExpense > 0 ? (item.amount / categoryTotalExpense) * 100 : 0,
+    }));
+  }, [categoryTotalsList, categoryTotalExpense]);
+
+  const categoryChartData = useMemo((): CategoryData[] => {
+    return categoryTotalsList.map((item) => ({
+      ...item,
+      percentage: categoryTotalExpense > 0 ? (item.amount / categoryTotalExpense) * 100 : 0,
+    }));
+  }, [categoryTotalsList, categoryTotalExpense]);
+
+  const topExpenseTags = useMemo((): (CategoryData & { count: number })[] => {
+    const tagTotals: Record<string, { amount: number; count: number }> = {};
+    let totalExpense = 0;
+
+    filteredTransactions.forEach((t) => {
+      const monthKey = t.date.slice(0, 7);
+      if (
+        t.type === 'expense' &&
+        monthKey >= parsedMonthRange.startKey &&
+        monthKey <= parsedMonthRange.endKey &&
+        t.tags?.length
+      ) {
+        totalExpense += t.amount;
+        t.tags.forEach((tag) => {
+          if (!tagTotals[tag]) {
+            tagTotals[tag] = { amount: 0, count: 0 };
+          }
+          tagTotals[tag].amount += t.amount;
+          tagTotals[tag].count += 1;
+        });
+      }
+    });
+
+    const tags = Object.entries(tagTotals)
+      .map(([tag, info]) => ({
+        category: tag,
+        amount: info.amount,
+        percentage: totalExpense > 0 ? (info.amount / totalExpense) * 100 : 0,
+        count: info.count,
       }))
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5);
-    
-    return categories;
+
+    return tags;
   }, [filteredTransactions, parsedMonthRange]);
   
   // Calculate overall stats
@@ -373,9 +442,15 @@ export const ReportsPage: React.FC = () => {
       
       {/* Top Categories */}
       <section>
-        <div className="flex items-center gap-2 mb-3">
-          <Calendar size={20} className="text-gray-700" />
-          <h2 className="text-lg font-bold text-gray-800">支出分類排行</h2>
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2">
+            <Calendar size={20} className="text-gray-700" />
+            <h2 className="text-lg font-bold text-gray-800">支出分類排行</h2>
+          </div>
+          <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
+            <button onClick={() => setCategoryView('list')} className={`p-1.5 rounded-md ${categoryView === 'list' ? 'bg-white shadow' : ''}`}><List size={16} /></button>
+            <button onClick={() => setCategoryView('pie')} className={`p-1.5 rounded-md ${categoryView === 'pie' ? 'bg-white shadow' : ''}`}><PieChart size={16} /></button>
+          </div>
         </div>
         
         <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100">
@@ -384,28 +459,93 @@ export const ReportsPage: React.FC = () => {
               <p className="text-sm">尚無支出資料</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {topExpenseCategories.map((cat, index) => (
-                <div key={cat.category}>
-                  <div className="flex justify-between items-center mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-bold text-gray-400">#{index + 1}</span>
-                      <span className="text-sm font-medium text-gray-800">{cat.category}</span>
+            <>
+              {categoryView === 'list' && (
+                <div className="space-y-4">
+                  {topExpenseCategories.map((cat, index) => (
+                    <div key={cat.category}>
+                      <div className="flex justify-between items-center mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-bold text-gray-400">#{index + 1}</span>
+                          <span className="text-sm font-medium text-gray-800">{cat.category}</span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-gray-900">{formatCurrency(cat.amount).replace('NT$', '')}</p>
+                          <p className="text-xs text-gray-400">{cat.percentage.toFixed(1)}%</p>
+                        </div>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2">
+                        <div
+                          className="bg-linear-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all"
+                          style={{ width: `${cat.percentage}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-gray-900">{formatCurrency(cat.amount).replace('NT$', '')}</p>
-                      <p className="text-xs text-gray-400">{cat.percentage.toFixed(1)}%</p>
-                    </div>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2">
-                    <div
-                      className="bg-linear-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all"
-                      style={{ width: `${cat.percentage}%` }}
-                    />
-                  </div>
+                  ))}
                 </div>
-              ))}
+              )}
+              {categoryView === 'pie' && <CategoryPieChart data={categoryChartData} />}
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Top Tags */}
+      <section className="mt-6">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2">
+            <TagsIcon size={20} className="text-gray-700" />
+            <h2 className="text-lg font-bold text-gray-800">支出標籤排行</h2>
+          </div>
+          <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => setTagView('list')}
+              className={`p-1.5 rounded-md ${tagView === 'list' ? 'bg-white shadow' : ''}`}
+            >
+              <List size={16} />
+            </button>
+            <button
+              onClick={() => setTagView('pie')}
+              className={`p-1.5 rounded-md ${tagView === 'pie' ? 'bg-white shadow' : ''}`}
+            >
+              <PieChart size={16} />
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100">
+          {topExpenseTags.length === 0 ? (
+            <div className="text-center py-6 text-gray-400">
+              <p className="text-sm">尚無標籤資料</p>
             </div>
+          ) : (
+            <>
+              {tagView === 'list' && (
+                <div className="space-y-4">
+                  {topExpenseTags.map((tag, index) => (
+                    <div key={tag.category}>
+                      <div className="flex justify-between items-center mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-bold text-gray-400">#{index + 1}</span>
+                          <span className="text-sm font-medium text-gray-800">{tag.category}</span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-gray-900">{formatCurrency(tag.amount).replace('NT$', '')}</p>
+                          <p className="text-xs text-gray-400">{tag.percentage.toFixed(1)}% · {tag.count} 筆</p>
+                        </div>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2">
+                        <div
+                          className="bg-linear-to-r from-emerald-500 to-teal-500 h-2 rounded-full transition-all"
+                          style={{ width: `${tag.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {tagView === 'pie' && <CategoryPieChart data={topExpenseTags} />}
+            </>
           )}
         </div>
       </section>

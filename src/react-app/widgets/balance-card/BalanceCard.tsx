@@ -1,4 +1,12 @@
-// Balance Card Widget
+/**
+ * BalanceCard.tsx - 餘額卡片組件
+ *
+ * 功能說明：
+ * 1. 顯示總餘額（所有帳戶加總）
+ * 2. 顯示本月支出和收入統計
+ * 3. 顯示信用卡總欠款（如果有）
+ * 4. 深色設計風格卡片
+ */
 
 import { ArrowDownCircle, ArrowUpCircle, Landmark } from 'lucide-react';
 import React from 'react';

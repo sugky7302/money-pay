@@ -1,7 +1,18 @@
-// Account Form Feature
+/**
+ * AccountForm.tsx - 帳戶表單組件
+ *
+ * 功能說明：
+ * 1. 新增/編輯帳戶
+ * 2. 設定帳戶名稱、類型、幣別
+ * 3. 設定初始餘額
+ * 4. 支援帳戶類型：銀行、現金、電子支付、信用卡、其他
+ * 5. 帳戶顏色選擇
+ * 6. 虛擬帳戶設定（不計入總資產）
+ */
 
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
+import { useToast } from '../../app/ToastContext';
 import { generateId } from '../../shared/lib/utils';
 import { Account } from '../../shared/types';
 import { Button } from '../../shared/ui/Button';
@@ -36,6 +47,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
   mode = 'add'
 }) => {
   const { addAccount, updateAccount, currencies, accounts } = useAppContext();
+  const { showToast } = useToast();
 
   const currencyOptions = currencies.map(c => ({
     value: c.code,
@@ -87,7 +99,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
   
   const handleSubmit = () => {
     if (!formData.name) {
-      alert('請輸入帳戶名稱');
+      showToast('請輸入帳戶名稱', 'error');
       return;
     }
     

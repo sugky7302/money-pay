@@ -1,4 +1,14 @@
-// Transaction Form Feature
+/**
+ * TransactionForm.tsx - 交易表單組件
+ *
+ * 功能說明：
+ * 1. 新增/編輯收入或支出交易
+ * 2. 支援發票 QR Code 掃描自動填入
+ * 3. 選擇帳戶、分類、商家、標籤
+ * 4. 快速新增分類/商家/標籤
+ * 5. 輸入金額、日期、備註
+ * 6. 根據交易類型（收入/支出）過濾分類
+ */
 
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';

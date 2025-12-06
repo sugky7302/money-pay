@@ -1,7 +1,16 @@
-// Credit Card Payment Form Feature
+/**
+ * CreditCardPaymentForm.tsx - 信用卡還款表單組件
+ *
+ * 功能說明：
+ * 1. 從指定帳戶還款到信用卡
+ * 2. 選擇付款來源帳戶（非信用卡）
+ * 3. 選擇目標信用卡帳戶
+ * 4. 自動建立轉帳交易記錄
+ */
 
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
+import { useToast } from '../../app/ToastContext';
 import { generateId, getCurrentDate } from '../../shared/lib/utils';
 import { Transaction } from '../../shared/types';
 import { Button } from '../../shared/ui/Button';
@@ -19,6 +28,7 @@ export const CreditCardPaymentForm: React.FC<CreditCardPaymentFormProps> = ({
   onClose, 
 }) => {
   const { accounts, addTransaction } = useAppContext();
+  const { showToast } = useToast();
   
   const [fromAccount, setFromAccount] = useState<string>('');
   const [toAccount, setToAccount] = useState<string>('');
@@ -48,7 +58,7 @@ export const CreditCardPaymentForm: React.FC<CreditCardPaymentFormProps> = ({
   
   const handleSubmit = () => {
     if (!fromAccount || !toAccount || amount <= 0) {
-      alert('請填寫完整資訊');
+      showToast('請填寫完整資訊', 'error');
       return;
     }
     
