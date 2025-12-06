@@ -1,13 +1,13 @@
 // App context for state management
 
 import React, {
-  createContext,
-  ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
+    createContext,
+    ReactNode,
+    useCallback,
+    useContext,
+    useEffect,
+    useRef,
+    useState,
 } from "react";
 import { googleSheetsService, storage, useConfig } from "../shared/lib";
 import { Account, Category, Currency, Merchant, Tag, Transaction } from "../shared/types";
@@ -407,28 +407,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   // Download backup as JSON file
   const downloadBackup = () => {
-    const backupData = {
-      transactions,
-      accounts,
-      categories,
-      tags,
-      merchants,
-      currencies,
-      exportDate: new Date().toISOString(),
-    };
+    try {
+      const backupData = {
+        transactions,
+        accounts,
+        categories,
+        tags,
+        merchants,
+        currencies,
+        exportDate: new Date().toISOString(),
+      };
 
-    const dataStr =
-      "data:text/json;charset=utf-8," +
-      encodeURIComponent(JSON.stringify(backupData, null, 2));
-    const downloadAnchorNode = document.createElement("a");
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute(
-      "download",
-      `budget_backup_${new Date().toISOString().split("T")[0]}.json`
-    );
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+      const jsonStr = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.href = url;
+      downloadAnchorNode.download = `budget_backup_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      document.body.removeChild(downloadAnchorNode);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download backup', err);
+      alert('下載備份失敗，請稍後再試');
+    }
   };
 
   // Clear all data

@@ -41,6 +41,21 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   });
   const [isScanOpen, setIsScanOpen] = useState(false);
 
+  const resetForm = () => {
+    const expenseCategories = categories.filter(c => c.type === 'expense');
+    const defaultAccount = accounts.length > 0 ? accounts[0].name : '';
+    setFormData({
+      type: 'expense',
+      amount: 0,
+      category: expenseCategories.length > 0 ? expenseCategories[0].name : '',
+      date: getCurrentDate(),
+      note: '',
+      tags: [],
+      merchant: '',
+      account: defaultAccount,
+    });
+  };
+
   useEffect(() => {
     if (isOpen && startWithInvoiceScan) {
       setIsScanOpen(true);
@@ -52,18 +67,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       if (transaction && mode === 'edit') {
         setFormData(transaction);
       } else {
-        const expenseCategories = categories.filter(c => c.type === 'expense');
-        const defaultAccount = accounts.length > 0 ? accounts[0].name : '';
-        setFormData({
-          type: 'expense',
-          amount: 0,
-          category: expenseCategories.length > 0 ? expenseCategories[0].name : '',
-          date: getCurrentDate(),
-          note: '',
-          tags: [],
-          merchant: '',
-          account: defaultAccount,
-        });
+        resetForm();
       }
     };
     
@@ -133,6 +137,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         account: formData.account,
       };
       addTransaction(newTransaction);
+      resetForm();
     } else if (transaction) {
       updateTransaction(transaction.id, formData);
     }

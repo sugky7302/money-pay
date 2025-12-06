@@ -1,6 +1,6 @@
 // Main Content Component - Primary app layout after authentication
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { TransactionForm } from "../features/transaction-form/TransactionForm";
 import { TransferForm } from "../features/transfer-form/TransferForm";
 import { AccountsPage } from "../pages/accounts/AccountsPage";
@@ -25,6 +25,13 @@ export const MainContent: React.FC = () => {
   const [showTransferForm, setShowTransferForm] = useState(false);
   const [startWithInvoiceScan, setStartWithInvoiceScan] = useState(false);
   const { isAnyModalOpen } = useUIStore();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollToTop = () => {
+    // 直接定位到頂端（不用動畫）
+    scrollContainerRef.current?.scrollTo(0, 0);
+    window.scrollTo(0, 0);
+  };
 
   // Render active page
   const renderPage = () => {
@@ -60,7 +67,7 @@ export const MainContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 font-sans md:flex md:items-center md:justify-center md:bg-gray-200">
       <div className="w-full min-h-screen md:bg-gray-50 md:rounded-[40px] md:shadow-2xl md:overflow-hidden relative flex flex-col">
-        <div className="flex-1 overflow-y-auto no-scrollbar">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto no-scrollbar">
           {renderPage()}
         </div>
 
@@ -85,6 +92,7 @@ export const MainContent: React.FC = () => {
           onClose={() => {
             setShowTransactionForm(false);
             setStartWithInvoiceScan(false);
+            scrollToTop();
           }}
           mode="add"
           startWithInvoiceScan={startWithInvoiceScan}
@@ -92,7 +100,10 @@ export const MainContent: React.FC = () => {
 
         <TransferForm
           isOpen={showTransferForm}
-          onClose={() => setShowTransferForm(false)}
+          onClose={() => {
+            setShowTransferForm(false);
+            scrollToTop();
+          }}
         />
       </div>
     </div>

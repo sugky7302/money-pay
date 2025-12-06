@@ -2,11 +2,33 @@
 
 import { useGoogleLogin } from "@react-oauth/google";
 import { Wallet } from "lucide-react";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useAuth } from "../../app/AuthContext";
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
+
+  // 處理 redirect flow 回來時 URL hash 中的 token
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token')) {
+      const params = new URLSearchParams(hash.substring(1));
+      const accessToken = params.get('access_token');
+      const expiresIn = params.get('expires_in');
+      
+      if (accessToken && expiresIn) {
+        // 清除 URL hash
+        window.history.replaceState(null, '', window.location.pathname);
+        
+        // 處理登入
+        handleGoogleSuccess({
+          access_token: accessToken,
+          expires_in: parseInt(expiresIn, 10),
+        });
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleGoogleSuccess = useCallback(
     async (tokenResponse: { access_token: string; expires_in: number }) => {
@@ -54,6 +76,9 @@ export const LoginPage: React.FC = () => {
       alert("Google 登入失敗，請稍後再試。");
     },
     scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets',
+    flow: 'implicit',
+    ux_mode: 'redirect',
+    redirect_uri: window.location.origin,
   });
 
   return (
