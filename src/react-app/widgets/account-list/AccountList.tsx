@@ -1,7 +1,7 @@
 // Account List Widget
 
 import { Edit, Scale, Trash2, Wallet } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
 import { calculateAccountBalance, formatCurrency } from '../../shared/lib/utils';
 import { Account } from '../../shared/types';
@@ -22,6 +22,69 @@ const ACCOUNT_TYPE_LABELS: Record<Account['type'], string> = {
 
 export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAdjust }) => {
   const { deleteAccount, transactions } = useAppContext();
+  const [orderedIds, setOrderedIds] = useState<number[]>([]);
+  const [draggingId, setDraggingId] = useState<number | null>(null);
+
+  const persistOrder = (ids: number[]) => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem('account_order', JSON.stringify(ids));
+    } catch (error) {
+      console.error('Failed to save account order', error);
+    }
+  };
+
+  useEffect(() => {
+    const accountIds = accounts.map((a) => a.id);
+    let saved: number[] = [];
+    if (typeof window !== 'undefined') {
+      const raw = localStorage.getItem('account_order');
+      if (raw) {
+        try {
+          saved = JSON.parse(raw) as number[];
+        } catch (error) {
+          console.error('Failed to parse account order', error);
+        }
+      }
+    }
+
+    const merged = [
+      ...saved.filter((id) => accountIds.includes(id)),
+      ...accountIds.filter((id) => !saved.includes(id)),
+    ];
+
+    setOrderedIds(merged);
+  }, [accounts]);
+
+  const orderedAccounts = useMemo(() => {
+    if (!orderedIds.length) return accounts;
+    const map = new Map(accounts.map((a) => [a.id, a] as const));
+    const arranged: Account[] = [];
+    orderedIds.forEach((id) => {
+      const found = map.get(id);
+      if (found) arranged.push(found);
+    });
+    accounts.forEach((acc) => {
+      if (!orderedIds.includes(acc.id)) arranged.push(acc);
+    });
+    return arranged;
+  }, [accounts, orderedIds]);
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>, targetId: number) => {
+    event.preventDefault();
+    if (draggingId === null || draggingId === targetId) return;
+    setOrderedIds((prev) => {
+      const base = prev.length ? [...prev] : accounts.map((a) => a.id);
+      const from = base.indexOf(draggingId);
+      const to = base.indexOf(targetId);
+      if (from === -1 || to === -1) return prev;
+      base.splice(from, 1);
+      base.splice(to, 0, draggingId);
+      persistOrder(base);
+      return base;
+    });
+  };
+  
   
   const handleDelete = (id: number) => {
     if (window.confirm('確定要刪除此帳戶嗎？')) {
@@ -31,14 +94,18 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
   
   return (
     <div className="space-y-3">
-      {accounts.map((account) => {
+      {orderedAccounts.map((account) => {
         // 計算帳戶當前餘額
         const currentBalance = calculateAccountBalance(account, transactions);
         
         return (
           <div 
             key={account.id}
-            className="bg-white p-4 rounded-2xl flex items-center justify-between gap-3 shadow-sm border border-gray-100"
+            className="bg-white p-4 rounded-2xl flex items-center justify-between gap-3 shadow-sm border border-gray-100 cursor-move"
+            draggable
+            onDragStart={() => setDraggingId(account.id)}
+            onDragOver={(e) => handleDragOver(e, account.id)}
+            onDragEnd={() => setDraggingId(null)}
           >
             <div className="flex items-center gap-4 flex-1 min-w-0">
               <div 
