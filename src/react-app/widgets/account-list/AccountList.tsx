@@ -1,7 +1,7 @@
 // Account List Widget
 
 import { Edit, Scale, Trash2, Wallet } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
 import { calculateAccountBalance, formatCurrency } from '../../shared/lib/utils';
 import { Account } from '../../shared/types';
@@ -24,6 +24,7 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
   const { deleteAccount, transactions } = useAppContext();
   const [orderedIds, setOrderedIds] = useState<number[]>([]);
   const [draggingId, setDraggingId] = useState<number | null>(null);
+  const touchMoveHandlerRef = useRef<(e: TouchEvent) => void>();
 
   const persistOrder = (ids: number[]) => {
     if (typeof window === 'undefined') return;
@@ -70,20 +71,57 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
     return arranged;
   }, [accounts, orderedIds]);
 
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>, targetId: number) => {
-    event.preventDefault();
-    if (draggingId === null || draggingId === targetId) return;
+  const reorder = (dragId: number, targetId: number) => {
     setOrderedIds((prev) => {
       const base = prev.length ? [...prev] : accounts.map((a) => a.id);
-      const from = base.indexOf(draggingId);
+      const from = base.indexOf(dragId);
       const to = base.indexOf(targetId);
       if (from === -1 || to === -1) return prev;
       base.splice(from, 1);
-      base.splice(to, 0, draggingId);
+      base.splice(to, 0, dragId);
       persistOrder(base);
       return base;
     });
   };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>, targetId: number) => {
+    event.preventDefault();
+    if (draggingId === null || draggingId === targetId) return;
+    reorder(draggingId, targetId);
+  };
+
+  const cleanupTouch = () => {
+    if (touchMoveHandlerRef.current) {
+      window.removeEventListener('touchmove', touchMoveHandlerRef.current as EventListener);
+      touchMoveHandlerRef.current = undefined;
+    }
+    window.removeEventListener('touchend', handleTouchEnd);
+    setDraggingId(null);
+  };
+
+  const handleTouchMove = (dragId: number) => (e: TouchEvent) => {
+    const touch = e.touches[0];
+    if (!touch) return;
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const targetCard = el?.closest('[data-account-id]');
+    const targetId = targetCard ? Number(targetCard.getAttribute('data-account-id')) : null;
+    if (targetId && targetId !== dragId) {
+      reorder(dragId, targetId);
+    }
+    e.preventDefault();
+  };
+
+  const handleTouchStart = (id: number) => {
+    setDraggingId(id);
+    const moveHandler = handleTouchMove(id);
+    touchMoveHandlerRef.current = moveHandler;
+    window.addEventListener('touchmove', moveHandler, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
+  };
+
+  function handleTouchEnd() {
+    cleanupTouch();
+  }
   
   
   const handleDelete = (id: number) => {
@@ -106,6 +144,8 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
             onDragStart={() => setDraggingId(account.id)}
             onDragOver={(e) => handleDragOver(e, account.id)}
             onDragEnd={() => setDraggingId(null)}
+            onTouchStart={() => handleTouchStart(account.id)}
+            data-account-id={account.id}
           >
             <div className="flex items-center gap-4 flex-1 min-w-0">
               <div 
