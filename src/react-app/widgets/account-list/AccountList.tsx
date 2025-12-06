@@ -38,20 +38,26 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
         return (
           <div 
             key={account.id}
-            className="bg-white p-4 rounded-2xl flex items-center justify-between shadow-sm border border-gray-100"
+            className="bg-white p-4 rounded-2xl flex items-center justify-between gap-3 shadow-sm border border-gray-100"
           >
-            <div className="flex items-center gap-4 flex-1">
+            <div className="flex items-center gap-4 flex-1 min-w-0">
               <div 
-                className="p-3 rounded-full"
+                className="p-3 rounded-full flex-shrink-0"
                 style={{ backgroundColor: `${account.color}20`, color: account.color }}
               >
                 <Wallet size={20} />
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h4 className="font-semibold text-gray-800">{account.name}</h4>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <h4
+                    className="font-semibold text-gray-800 leading-tight break-words max-w-[220px] sm:max-w-[360px] overflow-hidden"
+                    style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
+                    title={account.name}
+                  >
+                    {account.name}
+                  </h4>
                   {account.isVirtual && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200">
+                    <span className="inline-flex items-center h-5 px-2 rounded-full bg-gray-100 text-gray-600 border border-gray-200 text-[11px] font-medium whitespace-nowrap">
                       虛擬
                     </span>
                   )}
@@ -59,7 +65,7 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
                 <p className="text-xs text-gray-400">{ACCOUNT_TYPE_LABELS[account.type]}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center shrink-0 text-right ml-auto -mr-3">
               <span className={`font-bold ${currentBalance >= 0 ? 'text-gray-800' : 'text-red-500'}`}>
                 {formatCurrency(currentBalance).replace('NT$', '')}
               </span>
@@ -76,6 +82,7 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
                 <button 
                   onClick={() => onEdit(account)} 
                   className="text-gray-300 hover:text-blue-400 p-2"
+                  title="編輯帳戶"
                 >
                   <Edit size={16} />
                 </button>
@@ -83,6 +90,7 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
               <button 
                 onClick={() => handleDelete(account.id)} 
                 className="text-gray-300 hover:text-red-400 p-2"
+                title="刪除帳戶"
               >
                 <Trash2 size={16} />
               </button>
