@@ -1,6 +1,6 @@
 // Add Menu Component
 
-import { ArrowLeftRight, Plus, QrCode } from "lucide-react";
+import { ArrowLeftRight, Plus, QrCode, Landmark } from "lucide-react";
 import React from "react";
 
 interface AddMenuProps {
@@ -9,6 +9,7 @@ interface AddMenuProps {
   onSelectTransaction: () => void;
   onSelectTransfer: () => void;
   onSelectInvoiceScan: () => void;
+  onSelectCreditCardPayment: () => void;
 }
 
 export const AddMenu: React.FC<AddMenuProps> = ({
@@ -17,6 +18,7 @@ export const AddMenu: React.FC<AddMenuProps> = ({
   onSelectTransaction,
   onSelectTransfer,
   onSelectInvoiceScan,
+  onSelectCreditCardPayment,
 }) => {
   if (!isOpen) return null;
 
@@ -68,6 +70,19 @@ export const AddMenu: React.FC<AddMenuProps> = ({
             <div className="text-left">
               <h3 className="font-bold">轉帳</h3>
               <p className="text-xs text-green-600">帳戶之間轉帳</p>
+            </div>
+          </button>
+
+          <button
+            onClick={onSelectCreditCardPayment}
+            className="w-full bg-orange-50 hover:bg-orange-100 text-orange-700 p-4 rounded-xl flex items-center gap-4 transition-colors"
+          >
+            <div className="bg-orange-500 text-white p-3 rounded-full">
+              <Landmark size={24} />
+            </div>
+            <div className="text-left">
+              <h3 className="font-bold">繳交卡費</h3>
+              <p className="text-xs text-orange-600">償還信用卡帳單</p>
             </div>
           </button>
         </div>

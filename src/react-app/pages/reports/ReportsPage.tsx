@@ -21,7 +21,7 @@ interface CategoryData {
 type SortOption = 'month' | 'income' | 'expense' | 'balance';
 
 export const ReportsPage: React.FC = () => {
-  const { transactions } = useAppContext();
+  const { transactions, accounts } = useAppContext();
   const [selectedPeriod, setSelectedPeriod] = useState<'6months' | '12months' | 'custom'>('6months');
   const [customStartMonth, setCustomStartMonth] = useState<string>(() => {
     const date = new Date();
@@ -33,6 +33,19 @@ export const ReportsPage: React.FC = () => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
   });
   const [sortBy, setSortBy] = useState<SortOption>('month');
+
+  const filteredTransactions = useMemo(() => {
+    const creditCardAccountNames = accounts
+      .filter(a => a.type === 'credit-card')
+      .map(a => a.name);
+
+    return transactions.filter(t => {
+      if (t.type === 'transfer' && t.toAccount && creditCardAccountNames.includes(t.toAccount)) {
+        return false; // Exclude credit card payments
+      }
+      return true;
+    });
+  }, [transactions, accounts]);
 
   const parsedMonthRange = useMemo(() => {
     const now = new Date();
@@ -96,7 +109,7 @@ export const ReportsPage: React.FC = () => {
     });
     
     // Aggregate transactions by month within range
-    transactions.forEach(t => {
+    filteredTransactions.forEach(t => {
       const monthKey = t.date.slice(0, 7);
       if (monthKey >= parsedMonthRange.startKey && monthKey <= parsedMonthRange.endKey && data[monthKey]) {
         if (t.type === 'income') {
@@ -127,7 +140,7 @@ export const ReportsPage: React.FC = () => {
         // Already in chronological order
         return result;
     }
-  }, [transactions, parsedMonthRange, sortBy]);
+  }, [filteredTransactions, parsedMonthRange, sortBy]);
   
   // Calculate top expense categories for the selected period
   const topExpenseCategories = useMemo((): CategoryData[] => {
@@ -135,7 +148,7 @@ export const ReportsPage: React.FC = () => {
     let totalExpense = 0;
     
     // Filter transactions by selected period
-    transactions.forEach(t => {
+    filteredTransactions.forEach(t => {
       const monthKey = t.date.slice(0, 7);
       if (
         t.type === 'expense' &&
@@ -157,7 +170,7 @@ export const ReportsPage: React.FC = () => {
       .slice(0, 5);
     
     return categories;
-  }, [transactions, parsedMonthRange]);
+  }, [filteredTransactions, parsedMonthRange]);
   
   // Calculate overall stats
   const totalIncome = monthlyData.reduce((sum, m) => sum + m.income, 0);

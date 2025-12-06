@@ -1,4 +1,12 @@
-// Modal component
+/**
+ * Modal.tsx - 彈出視窗組件
+ * 
+ * 功能說明：
+ * 1. 顯示底部彈出式對話框（手機版）
+ * 2. 顯示置中彈出視窗（桌面版）
+ * 3. 點擊背景可關閉
+ * 4. 支援滾動內容
+ */
 
 import React, { ReactNode } from 'react';
 
@@ -9,6 +17,15 @@ interface ModalProps {
   children: ReactNode;
 }
 
+/**
+ * 彈出視窗組件
+ * 提供統一的彈出視窗樣式，支援手機和桌面版型
+ * @param isOpen - 是否顯示
+ * @param onClose - 關閉回調函數
+ * @param title - 視窗標題
+ * @param children - 視窗內容
+ * @returns 彈出視窗組件
+ */
 export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
   

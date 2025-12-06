@@ -1,4 +1,11 @@
-// Button component
+/**
+ * Button.tsx - 通用按鈕組件
+ * 
+ * 功能說明：
+ * 1. 提供 primary、secondary、danger 三種樣式
+ * 2. 支援所有原生 button 屬性
+ * 3. 點擊時有縮放動畫效果
+ */
 
 import React from 'react';
 
@@ -7,6 +14,12 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
 }
 
+/**
+ * 通用按鈕組件
+ * @param variant - 按鈕樣式（primary/secondary/danger）
+ * @param children - 按鈕內容
+ * @returns 樣式化的按鈕
+ */
 export const Button: React.FC<ButtonProps> = ({ 
   variant = 'primary', 
   children, 

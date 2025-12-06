@@ -35,7 +35,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
   account,
   mode = 'add'
 }) => {
-  const { addAccount, updateAccount, currencies } = useAppContext();
+  const { addAccount, updateAccount, currencies, accounts } = useAppContext();
 
   const currencyOptions = currencies.map(c => ({
     value: c.code,
@@ -48,8 +48,17 @@ export const AccountForm: React.FC<AccountFormProps> = ({
     balance: 0,
     currency: 'TWD',
     isVirtual: false,
+    group: '',
     color: COLORS[0],
   });
+
+  const groupOptions = Array.from(
+    new Set(
+      accounts
+        .map((a) => a.group)
+        .filter((group): group is string => Boolean(group && group.trim()))
+    )
+  );
   
   useEffect(() => {
     const loadFormData = () => {
@@ -58,6 +67,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
           ...account,
           currency: account.currency || 'TWD', // 相容舊資料
           isVirtual: Boolean(account.isVirtual),
+          group: account.group || '',
         });
       } else {
         setFormData({
@@ -66,6 +76,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
           balance: 0,
           currency: 'TWD',
           isVirtual: false,
+          group: '',
           color: COLORS[0],
         });
       }
@@ -88,11 +99,15 @@ export const AccountForm: React.FC<AccountFormProps> = ({
         balance: Number(formData.balance) || 0,
         currency: formData.currency || 'TWD',
         isVirtual: Boolean(formData.isVirtual),
+        group: formData.group?.trim() || undefined,
         color: formData.color,
       };
       addAccount(newAccount);
     } else if (account) {
-      updateAccount(account.id, formData);
+      updateAccount(account.id, {
+        ...formData,
+        group: formData.group?.trim() || undefined,
+      });
     }
     
     onClose();
@@ -131,6 +146,24 @@ export const AccountForm: React.FC<AccountFormProps> = ({
           onChange={(e) => setFormData({...formData, balance: Number(e.target.value)})}
           placeholder="0"
         />
+
+        <div>
+          <Input
+            type="text"
+            label="群組（可選）"
+            value={formData.group || ''}
+            onChange={(e) => setFormData({ ...formData, group: e.target.value })}
+            placeholder="例如：日常花費、投資"
+            list="account-group-options"
+          />
+          {groupOptions.length > 0 && (
+            <datalist id="account-group-options">
+              {groupOptions.map((group) => (
+                <option key={group} value={group} />
+              ))}
+            </datalist>
+          )}
+        </div>
         
         <label className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm text-gray-700">
           <input

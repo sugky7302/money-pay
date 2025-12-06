@@ -1,4 +1,11 @@
-// Select component
+/**
+ * Select.tsx - 下拉選擇框組件
+ * 
+ * 功能說明：
+ * 1. 提供統一樣式的下拉選擇框
+ * 2. 支援標籤顯示
+ * 3. 支援所有原生 select 屬性
+ */
 
 import React from 'react';
 import { ArrowDownCircle } from 'lucide-react';
@@ -8,6 +15,12 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   options: { value: string; label: string }[];
 }
 
+/**
+ * 下拉選擇框組件
+ * @param label - 選擇框標籤（選填）
+ * @param options - 選項陣列
+ * @returns 樣式化的下拉選擇框
+ */
 export const Select: React.FC<SelectProps> = ({ label, options, className = '', ...props }) => {
   return (
     <div>

@@ -92,7 +92,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       type: formData.type as 'expense' | 'income',
     };
     addCategory(newCategory);
-    setFormData({ ...formData, category: name });
+    // InputSelect 的 onChange 會處理選中
   };
 
   const handleCreateMerchant = (name: string) => {
@@ -101,14 +101,12 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       name,
     };
     addMerchant(newMerchant);
-    setFormData({ ...formData, merchant: name });
+    // InputSelect 的 onChange 會處理選中
   };
 
   const handleCreateTag = (name: string) => {
+    // 如果標籤已存在，不需要再創建
     if (tags.some(tag => tag.name.toLowerCase() === name.toLowerCase())) {
-      if (!formData.tags?.includes(name)) {
-        setFormData({ ...formData, tags: [...(formData.tags || []), name] });
-      }
       return;
     }
     const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'];
@@ -118,7 +116,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
     };
     addTag(newTag);
-    setFormData({ ...formData, tags: [...(formData.tags || []), name] });
+    // 不在這裡更新 formData.tags，讓 InputSelect 的 onChange 來處理
   };
   
   const handleSubmit = () => {

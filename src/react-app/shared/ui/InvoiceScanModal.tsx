@@ -1,4 +1,12 @@
-// Invoice scanning modal using camera or image upload
+/**
+ * InvoiceScanModal.tsx - 電子發票掃描彈出視窗
+ * 
+ * 功能說明：
+ * 1. 開啟相機掃描 QR Code
+ * 2. 解析電子發票資料
+ * 3. 回傳解析結果供交易表單使用
+ * 4. 支援上傳圖片進行辨識
+ */
 
 import { Scanner } from '@yudiel/react-qr-scanner';
 import React from 'react';
@@ -10,6 +18,13 @@ interface InvoiceScanModalProps {
   onParsed: (data: ParsedInvoice) => void;
 }
 
+/**
+ * 電子發票掃描彈出視窗組件
+ * @param isOpen - 是否顯示
+ * @param onClose - 關閉回調函數
+ * @param onParsed - 解析成功後的回調函數
+ * @returns 發票掃描視窗
+ */
 export const InvoiceScanModal: React.FC<InvoiceScanModalProps> = ({ isOpen, onClose, onParsed }) => {
   if (!isOpen) return null;
 

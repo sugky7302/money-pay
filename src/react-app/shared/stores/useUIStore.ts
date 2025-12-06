@@ -1,9 +1,17 @@
-// UI State Store using Zustand
+/**
+ * useUIStore.ts - UI 狀態管理 Store
+ * 
+ * 功能說明：
+ * 1. 管理各種 Modal 的開關狀態
+ * 2. 提供全域 UI 狀態存取
+ * 3. 檢查是否有任何 Modal 開啟（用於隱藏 TabBar）
+ */
 
 import { create } from 'zustand';
 
+/** UI 狀態介面 */
 interface UIState {
-  // Modal states
+  // Modal 狀態
   isSearchModalOpen: boolean;
   isManagementModalOpen: boolean;
   isAddMenuOpen: boolean;
@@ -11,7 +19,7 @@ interface UIState {
   isTransferFormOpen: boolean;
   isAccountFormOpen: boolean;
   
-  // Actions
+  // 操作方法
   setSearchModalOpen: (open: boolean) => void;
   setManagementModalOpen: (open: boolean) => void;
   setAddMenuOpen: (open: boolean) => void;
@@ -19,10 +27,14 @@ interface UIState {
   setTransferFormOpen: (open: boolean) => void;
   setAccountFormOpen: (open: boolean) => void;
   
-  // Computed - check if any modal is open (for hiding TabBar)
+  // 計算屬性 - 檢查是否有任何 Modal 開啟（用於隱藏 TabBar）
   isAnyModalOpen: () => boolean;
 }
 
+/**
+ * UI 狀態管理 Hook
+ * 使用 Zustand 管理全域 UI 狀態
+ */
 export const useUIStore = create<UIState>((set, get) => ({
   // Initial states
   isSearchModalOpen: false,

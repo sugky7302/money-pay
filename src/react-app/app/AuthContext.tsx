@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const tokenClient = googleGlobal.accounts.oauth2.initTokenClient({
         client_id: config.googleClientId,
         scope: scopes,
-        prompt: '', // silent refresh
+        prompt: 'none', // silent refresh
         callback: (response: any) => {
           if (response?.access_token) {
             const expiresAt = Date.now() + ((response.expires_in || 3600) - 60) * 1000;
@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         },
       });
 
-      tokenClient.requestAccessToken({ prompt: '' });
+      tokenClient.requestAccessToken({ prompt: 'none' });
     });
   };
 

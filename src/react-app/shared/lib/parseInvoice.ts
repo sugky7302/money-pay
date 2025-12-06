@@ -1,5 +1,14 @@
-// Utility to parse Taiwan e-invoice QR payload
+/**
+ * parseInvoice.ts - 台灣電子發票 QR Code 解析工具
+ * 
+ * 功能說明：
+ * 1. 解析電子發票 QR Code 資料
+ * 2. 轉換民國年為西元年
+ * 3. 擷取發票金額和日期
+ * 4. 擷取賣家統編
+ */
 
+/** 解析後的發票資料介面 */
 export interface ParsedInvoice {
   number?: string;
   date?: string; // yyyy-mm-dd
@@ -9,6 +18,11 @@ export interface ParsedInvoice {
   sellerId?: string;
 }
 
+/**
+ * 將民國年日期轉換為西元年日期
+ * @param raw - 民國年日期字串（7位數字，例如：1140105）
+ * @returns 西元年日期字串（格式：YYYY-MM-DD）或 undefined
+ */
 const toTWDate = (raw: string): string | undefined => {
   if (!/^[0-9]{7}$/.test(raw)) return undefined;
 
@@ -35,6 +49,11 @@ const toTWDate = (raw: string): string | undefined => {
   return `${year}-${mm}-${dd}`;
 };
 
+/**
+ * 解析電子發票 QR Code 內容
+ * @param payload - QR Code 掃描得到的原始字串
+ * @returns 解析後的發票資料（包含發票號碼、日期、金額、賣家統編）
+ */
 export const parseInvoicePayload = (payload: string): ParsedInvoice => {
   if (!payload) return {};
 

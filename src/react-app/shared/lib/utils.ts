@@ -1,5 +1,19 @@
-// Shared utility functions
+/**
+ * utils.ts - 共用工具函數庫
+ * 
+ * 功能說明：
+ * 1. 貨幣格式化
+ * 2. 日期時間處理
+ * 3. ID 生成
+ * 4. 帳戶餘額計算
+ * 5. 總資產計算
+ */
 
+/**
+ * 格式化金額為台幣貨幣格式
+ * @param amount - 要格式化的金額
+ * @returns 格式化後的貨幣字串（例如：NT$1,000）
+ */
 export const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('zh-TW', { 
     style: 'currency', 
@@ -8,20 +22,37 @@ export const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
+/**
+ * 取得當前月份字串
+ * @returns 當前月份（格式：YYYY-MM）
+ */
 export const getCurrentMonth = (): string => {
   return new Date().toISOString().slice(0, 7);
 };
 
+/**
+ * 取得當前日期字串
+ * @returns 當前日期（格式：YYYY-MM-DD）
+ */
 export const getCurrentDate = (): string => {
   return new Date().toISOString().split('T')[0];
 };
 
+/**
+ * 格式化時間
+ * @param date - Date 物件
+ * @returns 格式化的時間字串（格式：HH:MM）
+ */
 export const formatTime = (date: Date): string => {
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 };
 
+/**
+ * 生成唯一 ID
+ * 結合時間戳記和隨機數以降低碰撞風險
+ * @returns 唯一的數字 ID
+ */
 export const generateId = (): number => {
-  // Combine timestamp with a random number to reduce collision risk
   return Date.now() + Math.floor(Math.random() * 1000);
 };
 
@@ -67,8 +98,10 @@ export const calculateTotalBalance = (
   accounts: Account[],
   transactions: Transaction[]
 ): number => {
-  return accounts.reduce((total, account) => {
-    if (account.isVirtual) return total;
-    return total + calculateAccountBalance(account, transactions);
-  }, 0);
+  return accounts
+    .filter(account => account.type !== 'credit-card')
+    .reduce((total, account) => {
+      if (account.isVirtual) return total;
+      return total + calculateAccountBalance(account, transactions);
+    }, 0);
 };

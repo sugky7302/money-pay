@@ -1,6 +1,6 @@
 // Account List Widget
 
-import { Edit, Scale, Trash2, Wallet } from 'lucide-react';
+import { ChevronDown, Edit, Folder, Scale, Trash2, Wallet } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
 import { calculateAccountBalance, formatCurrency } from '../../shared/lib/utils';
@@ -25,6 +25,9 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
   const [orderedIds, setOrderedIds] = useState<number[]>([]);
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const touchMoveHandlerRef = useRef<((e: TouchEvent) => void) | null>(null);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+
+  const GROUP_COLLAPSE_KEY = 'account_group_collapse';
 
   const persistOrder = (ids: number[]) => {
     if (typeof window === 'undefined') return;
@@ -57,6 +60,21 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
     setOrderedIds(merged);
   }, [accounts]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = localStorage.getItem(GROUP_COLLAPSE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          setCollapsedGroups(parsed as Record<string, boolean>);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load group collapse state', error);
+    }
+  }, []);
+
   const orderedAccounts = useMemo(() => {
     if (!orderedIds.length) return accounts;
     const map = new Map(accounts.map((a) => [a.id, a] as const));
@@ -70,6 +88,26 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
     });
     return arranged;
   }, [accounts, orderedIds]);
+
+  const groupedAccounts = useMemo(() => {
+    const groups: { name: string; accounts: Account[] }[] = [];
+    const indexMap = new Map<string, number>();
+
+    orderedAccounts.forEach((account) => {
+      const groupName = account.group?.trim() || '未分組';
+      if (indexMap.has(groupName)) {
+        const idx = indexMap.get(groupName);
+        if (idx !== undefined) {
+          groups[idx].accounts.push(account);
+        }
+      } else {
+        indexMap.set(groupName, groups.length);
+        groups.push({ name: groupName, accounts: [account] });
+      }
+    });
+
+    return groups;
+  }, [orderedAccounts]);
 
   const reorder = (dragId: number, targetId: number) => {
     setOrderedIds((prev) => {
@@ -108,6 +146,9 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
     if (targetId && targetId !== dragId) {
       reorder(dragId, targetId);
     }
+    // This may cause a warning in the console if the user is scrolling,
+    // but it is necessary to prevent the page from scrolling while dragging.
+    // The warning is harmless and can be ignored.
     e.preventDefault();
   };
 
@@ -130,79 +171,132 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
       deleteAccount(id);
     }
   };
+
+  const persistCollapsed = (nextState: Record<string, boolean>) => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(GROUP_COLLAPSE_KEY, JSON.stringify(nextState));
+    } catch (error) {
+      console.error('Failed to save group collapse state', error);
+    }
+  };
+
+  const toggleGroup = (groupName: string) => {
+    setCollapsedGroups((prev) => {
+      const next = { ...prev, [groupName]: !prev[groupName] };
+      persistCollapsed(next);
+      return next;
+    });
+  };
   
   return (
-    <div className="space-y-3">
-      {orderedAccounts.map((account) => {
-        // 計算帳戶當前餘額
-        const currentBalance = calculateAccountBalance(account, transactions);
-        
+    <div className="space-y-4">
+      {groupedAccounts.map(({ name, accounts: groupAccounts }) => {
+        const groupBalance = groupAccounts.reduce((total, account) => {
+          return total + calculateAccountBalance(account, transactions);
+        }, 0);
+        const isCollapsed = collapsedGroups[name] ?? false;
+
         return (
-          <div 
-            key={account.id}
-            className="bg-white p-4 rounded-2xl flex items-center justify-between gap-3 shadow-sm border border-gray-100 cursor-move"
-            draggable
-            onDragStart={() => setDraggingId(account.id)}
-            onDragOver={(e) => handleDragOver(e, account.id)}
-            onDragEnd={() => setDraggingId(null)}
-            onTouchStart={() => handleTouchStart(account.id)}
-            data-account-id={account.id}
-          >
-            <div className="flex items-center gap-4 flex-1 min-w-0">
-              <div 
-                className="p-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: `${account.color}20`, color: account.color }}
-              >
-                <Wallet size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 min-w-0">
-                  <h4
-                    className="font-semibold text-gray-800 leading-tight break-words max-w-[220px] sm:max-w-[360px] overflow-hidden"
-                    style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
-                    title={account.name}
-                  >
-                    {account.name}
-                  </h4>
-                  {account.isVirtual && (
-                    <span className="inline-flex items-center h-5 px-2 rounded-full bg-gray-100 text-gray-600 border border-gray-200 text-[11px] font-medium whitespace-nowrap">
-                      虛擬
-                    </span>
-                  )}
+          <div key={name} className="space-y-2">
+            <button
+              type="button"
+              onClick={() => toggleGroup(name)}
+              className="w-full flex items-center justify-between rounded-2xl px-3 py-2 bg-gray-50 border border-gray-100 text-left transition hover:bg-gray-100"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-white border border-gray-100 shadow-sm text-gray-500">
+                  <Folder size={16} />
                 </div>
-                <p className="text-xs text-gray-400">{ACCOUNT_TYPE_LABELS[account.type]}</p>
+                <div>
+                  <p className="font-semibold text-gray-800">{name}</p>
+                  <p className="text-xs text-gray-400">
+                    {groupAccounts.length} 個帳戶 · {formatCurrency(groupBalance)}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center shrink-0 text-right ml-auto -mr-3">
-              <span className={`font-bold ${currentBalance >= 0 ? 'text-gray-800' : 'text-red-500'}`}>
-                {formatCurrency(currentBalance).replace('NT$', '')}
-              </span>
-              {onAdjust && (
-                <button 
-                  onClick={() => onAdjust(account, currentBalance)} 
-                  className="text-gray-300 hover:text-orange-400 p-2"
-                  title="餘額校正"
-                >
-                  <Scale size={16} />
-                </button>
-              )}
-              {onEdit && (
-                <button 
-                  onClick={() => onEdit(account)} 
-                  className="text-gray-300 hover:text-blue-400 p-2"
-                  title="編輯帳戶"
-                >
-                  <Edit size={16} />
-                </button>
-              )}
-              <button 
-                onClick={() => handleDelete(account.id)} 
-                className="text-gray-300 hover:text-red-400 p-2"
-                title="刪除帳戶"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
+              <ChevronDown
+                size={18}
+                className={`text-gray-400 transition-transform ${isCollapsed ? '-rotate-90' : 'rotate-0'}`}
+              />
+            </button>
+
+            {!isCollapsed && (
+              <div className="space-y-3">
+                {groupAccounts.map((account) => {
+                  const currentBalance = calculateAccountBalance(account, transactions);
+                  
+                  return (
+                    <div 
+                      key={account.id}
+                      className="bg-white p-4 rounded-2xl flex items-center justify-between gap-3 shadow-sm border border-gray-100 cursor-move"
+                      draggable
+                      onDragStart={() => setDraggingId(account.id)}
+                      onDragOver={(e) => handleDragOver(e, account.id)}
+                      onDragEnd={() => setDraggingId(null)}
+                      onTouchStart={() => handleTouchStart(account.id)}
+                      data-account-id={account.id}
+                    >
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <div 
+                          className="p-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: `${account.color}20`, color: account.color }}
+                        >
+                          <Wallet size={20} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <h4
+                              className="font-semibold text-gray-800 leading-tight break-words max-w-[220px] sm:max-w-[360px] overflow-hidden"
+                              style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
+                              title={account.name}
+                            >
+                              {account.name}
+                            </h4>
+                            {account.isVirtual && (
+                              <span className="inline-flex items-center h-5 px-2 rounded-full bg-gray-100 text-gray-600 border border-gray-200 text-[11px] font-medium whitespace-nowrap">
+                                虛擬
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-400">{ACCOUNT_TYPE_LABELS[account.type]}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center shrink-0 text-right ml-auto -mr-3">
+                        <span className={`font-bold ${currentBalance >= 0 ? 'text-gray-800' : 'text-red-500'}`}>
+                          {formatCurrency(currentBalance).replace('NT$', '')}
+                        </span>
+                        {onAdjust && (
+                          <button 
+                            onClick={() => onAdjust(account, currentBalance)} 
+                            className="text-gray-300 hover:text-orange-400 p-2"
+                            title="餘額校正"
+                          >
+                            <Scale size={16} />
+                          </button>
+                        )}
+                        {onEdit && (
+                          <button 
+                            onClick={() => onEdit(account)} 
+                            className="text-gray-300 hover:text-blue-400 p-2"
+                            title="編輯帳戶"
+                          >
+                            <Edit size={16} />
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => handleDelete(account.id)} 
+                          className="text-gray-300 hover:text-red-400 p-2"
+                          title="刪除帳戶"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         );
       })}

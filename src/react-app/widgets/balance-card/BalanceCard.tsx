@@ -1,15 +1,19 @@
 // Balance Card Widget
 
-import { ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
+import { ArrowDownCircle, ArrowUpCircle, Landmark } from 'lucide-react';
 import React from 'react';
 import { useAppContext } from '../../app/AppContext';
-import { calculateTotalBalance, formatCurrency, getCurrentMonth } from '../../shared/lib/utils';
+import { calculateAccountBalance, calculateTotalBalance, formatCurrency, getCurrentMonth } from '../../shared/lib/utils';
 
 export const BalanceCard: React.FC = () => {
   const { transactions, accounts } = useAppContext();
   
   // Calculate total balance (帳戶初始餘額 + 收入 - 支出 ± 轉帳)
   const totalBalance = calculateTotalBalance(accounts, transactions);
+
+  const creditCardBalance = accounts
+    .filter(a => a.type === 'credit-card')
+    .reduce((total, account) => total + calculateAccountBalance(account, transactions), 0);
   
   // Calculate monthly stats
   const currentMonth = getCurrentMonth();
@@ -42,6 +46,15 @@ export const BalanceCard: React.FC = () => {
             </div>
             <p className="font-semibold text-lg">{formatCurrency(monthlyIncome).split('.')[0]}</p>
           </div>
+          {creditCardBalance < 0 && (
+            <div>
+              <div className="flex items-center gap-1 text-orange-300 text-xs mb-1">
+                <Landmark size={12} />
+                信用卡餘額
+              </div>
+              <p className="font-semibold text-lg">{formatCurrency(creditCardBalance).split('.')[0]}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -242,7 +242,7 @@ class GoogleSheetsService {
     await this.writeSheet(spreadsheetId, SHEET_NAMES.transactions, transactionHeaders, transactionRows);
 
     // Save accounts
-    const accountHeaders = ['id', 'name', 'type', 'balance', 'currency', 'isVirtual', 'icon', 'color'];
+    const accountHeaders = ['id', 'name', 'type', 'balance', 'currency', 'isVirtual', 'icon', 'color', 'group'];
     const accountRows = data.accounts.map(a => [
       a.id,
       a.name,
@@ -252,6 +252,7 @@ class GoogleSheetsService {
       a.isVirtual ? 'true' : 'false',
       a.icon || '',
       a.color || '',
+      a.group || '',
     ]);
     await this.writeSheet(spreadsheetId, SHEET_NAMES.accounts, accountHeaders, accountRows);
 
@@ -297,7 +298,7 @@ class GoogleSheetsService {
     const metadataHeaders = ['key', 'value'];
     const metadataRows = [
       ['exportDate', data.exportDate],
-      ['version', '2.0.0'],
+      ['version', '2.1.0'],
     ];
     await this.writeSheet(spreadsheetId, SHEET_NAMES.metadata, metadataHeaders, metadataRows);
   }
@@ -387,6 +388,7 @@ class GoogleSheetsService {
         isVirtual: parseBoolean(accGet(row, 'isVirtual') || row[5]),
         icon: accGet(row, 'icon') || undefined,
         color: accGet(row, 'color') || row[7] || row[6] || undefined,
+        group: accGet(row, 'group') || row[8] || undefined,
       }));
 
       // Read categories
