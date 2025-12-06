@@ -24,7 +24,7 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
   const { deleteAccount, transactions } = useAppContext();
   const [orderedIds, setOrderedIds] = useState<number[]>([]);
   const [draggingId, setDraggingId] = useState<number | null>(null);
-  const touchMoveHandlerRef = useRef<(e: TouchEvent) => void>();
+  const touchMoveHandlerRef = useRef<((e: TouchEvent) => void) | null>(null);
 
   const persistOrder = (ids: number[]) => {
     if (typeof window === 'undefined') return;
@@ -92,8 +92,8 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
 
   const cleanupTouch = () => {
     if (touchMoveHandlerRef.current) {
-      window.removeEventListener('touchmove', touchMoveHandlerRef.current as EventListener);
-      touchMoveHandlerRef.current = undefined;
+      window.removeEventListener('touchmove', touchMoveHandlerRef.current);
+      touchMoveHandlerRef.current = null;
     }
     window.removeEventListener('touchend', handleTouchEnd);
     setDraggingId(null);
@@ -119,7 +119,7 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
     window.addEventListener('touchend', handleTouchEnd);
   };
 
-  function handleTouchEnd() {
+  function handleTouchEnd(e: TouchEvent) {
     cleanupTouch();
   }
   
