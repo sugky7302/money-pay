@@ -154,7 +154,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
 
       let merchantName = prev.merchant;
       if (data.sellerId) {
-        const foundMerchant = merchants.find(m => m.id === data.sellerId);
+        const foundMerchant = merchants.find((m) => String(m.id) === data.sellerId);
         if (foundMerchant) {
           merchantName = foundMerchant.name;
         }

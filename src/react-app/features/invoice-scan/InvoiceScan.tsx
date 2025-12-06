@@ -1,9 +1,8 @@
 // Invoice Scan Component
-// DEPENDENCY: react-qr-scanner
 
-import React, { useState } from 'react';
-import QrScanner from 'react-qr-scanner';
+import { Scanner } from '@yudiel/react-qr-scanner';
 import { X } from 'lucide-react';
+import React, { useState } from 'react';
 
 interface InvoiceScanProps {
   isOpen: boolean;
@@ -15,27 +14,34 @@ export const InvoiceScan: React.FC<InvoiceScanProps> = ({ isOpen, onClose, onSca
   const [error, setError] = useState<string | null>(null);
   const [firstScan, setFirstScan] = useState<string | null>(null);
 
-  const handleScan = (data: any) => {
-    if (data) {
-      const scannedText = data.text;
-      if (scannedText.startsWith('**')) {
-        // This is the second QR code
-        if (firstScan) {
-          onScanSuccess(firstScan + scannedText);
-          onClose();
-        } else {
-          setError('請先掃描左邊的 QR code');
-        }
+  const handleScan = (results: any) => {
+    if (!results) return;
+
+    const firstResult = Array.isArray(results) ? results[0] : results;
+    const scannedText = typeof firstResult === 'string' ? firstResult : firstResult?.rawValue;
+    if (!scannedText) return;
+
+    if (scannedText.startsWith('**')) {
+      // second QR code
+      if (firstScan) {
+        onScanSuccess(firstScan + scannedText);
+        onClose();
       } else {
-        // This is the first QR code
-        setFirstScan(scannedText);
-        setError('已掃描左邊的 QR code，請掃描右邊的 QR code');
+        setError('請先掃描左邊的 QR code');
       }
+    } else {
+      // first QR code
+      setFirstScan(scannedText);
+      setError('已掃描左邊的 QR code，請掃描右邊的 QR code');
     }
   };
 
-  const handleError = (err: any) => {
-    setError(err.message || '無法讀取QR code');
+  const handleError = (err: unknown) => {
+    if (err instanceof Error) {
+      setError(err.message);
+    } else {
+      setError('無法讀取QR code');
+    }
   };
 
   if (!isOpen) {
@@ -55,11 +61,11 @@ export const InvoiceScan: React.FC<InvoiceScanProps> = ({ isOpen, onClose, onSca
           </div>
 
           <div className="bg-gray-100 rounded-lg overflow-hidden">
-            <QrScanner
-              delay={300}
-              onError={handleError}
+            <Scanner
               onScan={handleScan}
-              style={{ width: '100%' }}
+              onError={handleError}
+              constraints={{ facingMode: { ideal: 'environment' } }}
+              scanDelay={400}
             />
           </div>
 

@@ -91,11 +91,11 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
   };
 
   const cleanupTouch = () => {
-    if (touchMoveHandlerRef.current) {
-      window.removeEventListener('touchmove', touchMoveHandlerRef.current);
+    const moveHandler = touchMoveHandlerRef.current;
+    if (moveHandler) {
+      window.removeEventListener('touchmove', moveHandler);
       touchMoveHandlerRef.current = null;
     }
-    window.removeEventListener('touchend', handleTouchEnd);
     setDraggingId(null);
   };
 
@@ -111,17 +111,18 @@ export const AccountList: React.FC<AccountListProps> = ({ accounts, onEdit, onAd
     e.preventDefault();
   };
 
+  const handleTouchEnd = () => {
+    window.removeEventListener('touchend', handleTouchEnd as EventListener);
+    cleanupTouch();
+  };
+
   const handleTouchStart = (id: number) => {
     setDraggingId(id);
     const moveHandler = handleTouchMove(id);
     touchMoveHandlerRef.current = moveHandler;
     window.addEventListener('touchmove', moveHandler, { passive: false });
-    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('touchend', handleTouchEnd as EventListener);
   };
-
-  function handleTouchEnd(e: TouchEvent) {
-    cleanupTouch();
-  }
   
   
   const handleDelete = (id: number) => {

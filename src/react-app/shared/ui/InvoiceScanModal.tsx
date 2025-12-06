@@ -36,9 +36,6 @@ export const InvoiceScanModal: React.FC<InvoiceScanModalProps> = ({ isOpen, onCl
             onError={(err) => console.error(err)}
             constraints={{ facingMode: { ideal: 'environment' } }}
             scanDelay={400}
-            viewFinder
-            scanByImage
-            videoStyle={{ width: '100%', height: 'auto' }}
           />
         </div>
 
