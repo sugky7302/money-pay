@@ -52,9 +52,7 @@ export const MainContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans md:flex md:items-center md:justify-center md:bg-gray-200">
-      <div className="w-full min-h-screen md:min-h-[800px] md:max-h-[850px] md:max-w-[400px] md:bg-gray-50 md:rounded-[40px] md:shadow-2xl md:overflow-hidden relative flex flex-col">
-        <div className="hidden md:block absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-gray-900 rounded-b-2xl z-50" />
-
+      <div className="w-full min-h-screen md:bg-gray-50 md:rounded-[40px] md:shadow-2xl md:overflow-hidden relative flex flex-col">
         <div className="flex-1 overflow-y-auto no-scrollbar">
           {renderPage()}
         </div>

@@ -170,17 +170,17 @@ export const ReportsPage: React.FC = () => {
   const maxAmount = Math.max(1, ...monthlyData.map(m => Math.max(m.income, m.expense)));
   
   return (
-    <div className="pb-24 pt-12 px-6">
+    <div className="pb-24 pt-12 px-4 sm:px-6 lg:px-10 max-w-5xl mx-auto">
       <header className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">收支報表</h1>
         <p className="text-sm text-gray-500">統計分析與趨勢圖表</p>
       </header>
       
       {/* Period Selector */}
-      <div className="flex flex-wrap gap-2 mb-3">
+      <div className="flex flex-wrap gap-2 mb-2">
         <button
           onClick={() => setSelectedPeriod('6months')}
-          className={`flex-1 min-w-[120px] py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
+          className={`flex-1 min-w-[120px] sm:w-auto py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
             selectedPeriod === '6months'
               ? 'bg-blue-500 text-white'
               : 'bg-white text-gray-600 border border-gray-200'
@@ -190,7 +190,7 @@ export const ReportsPage: React.FC = () => {
         </button>
         <button
           onClick={() => setSelectedPeriod('12months')}
-          className={`flex-1 min-w-[120px] py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
+          className={`flex-1 min-w-[120px] sm:w-auto py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
             selectedPeriod === '12months'
               ? 'bg-blue-500 text-white'
               : 'bg-white text-gray-600 border border-gray-200'
@@ -200,7 +200,7 @@ export const ReportsPage: React.FC = () => {
         </button>
         <button
           onClick={() => setSelectedPeriod('custom')}
-          className={`flex-1 min-w-[120px] py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
+          className={`flex-1 min-w-[120px] sm:w-auto py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
             selectedPeriod === 'custom'
               ? 'bg-blue-500 text-white'
               : 'bg-white text-gray-600 border border-gray-200'
@@ -210,30 +210,25 @@ export const ReportsPage: React.FC = () => {
         </button>
       </div>
       {selectedPeriod === 'custom' && (
-        <div className="flex flex-wrap items-center gap-3 mb-6">
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            起始月份
-            <input
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <input
               type="month"
               value={customStartMonth}
               onChange={(e) => setCustomStartMonth(e.target.value)}
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
-          </label>
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            結束月份
+          <span className='text-sm text-gray-700'>到</span>
             <input
               type="month"
               value={customEndMonth}
               onChange={(e) => setCustomEndMonth(e.target.value)}
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
-          </label>
         </div>
       )}
       
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
           <div className="flex items-center gap-2 text-green-600 mb-2">
             <TrendingUp size={16} />
@@ -252,7 +247,7 @@ export const ReportsPage: React.FC = () => {
           <p className="text-xs text-gray-400 mt-1">平均 {formatCurrency(avgMonthlyExpense).replace('NT$', '')}/月</p>
         </div>
         
-        <div className="bg-linear-to-br from-blue-500 to-blue-600 p-4 rounded-2xl shadow-sm col-span-2">
+        <div className="bg-linear-to-br from-blue-500 to-blue-600 p-4 rounded-2xl shadow-sm col-span-2 sm:col-span-3">
           <div className="flex items-center gap-2 text-white/80 mb-2">
             <BarChart3 size={16} />
             <span className="text-xs font-medium">淨收支</span>
@@ -268,14 +263,14 @@ export const ReportsPage: React.FC = () => {
       
       {/* Trend Chart */}
       <section className="mb-6">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
             <BarChart3 size={20} className="text-gray-700" />
             <h2 className="text-lg font-bold text-gray-800">收支趨勢</h2>
           </div>
           
           {/* Sort Buttons */}
-          <div className="flex gap-1">
+          <div className="flex flex-wrap gap-1">
             <button
               onClick={() => setSortBy('month')}
               className={`px-2 py-1 text-xs rounded-lg transition-colors ${
@@ -323,7 +318,7 @@ export const ReportsPage: React.FC = () => {
           </div>
         </div>
         
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100">
           <div className="space-y-4">
             {monthlyData.map((data, index) => (
               <div key={index}>
@@ -370,7 +365,7 @@ export const ReportsPage: React.FC = () => {
           <h2 className="text-lg font-bold text-gray-800">支出分類排行</h2>
         </div>
         
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100">
           {topExpenseCategories.length === 0 ? (
             <div className="text-center py-6 text-gray-400">
               <p className="text-sm">尚無支出資料</p>
