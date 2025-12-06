@@ -43,7 +43,7 @@ export const CategoryChart: React.FC<CategoryChartProps> = ({ data }) => {
           labelStyle={{ fontWeight: 'bold' }}
         />
         <Bar dataKey="amount" radius={[0, 4, 4, 0]}>
-          {data.map((entry, index) => (
+          {data.map((_, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Bar>

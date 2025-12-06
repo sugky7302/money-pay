@@ -13,6 +13,7 @@ import { AppContent } from "./AppContent";
 import { AppProvider } from "./AppContext";
 import { AuthProvider } from "./AuthContext";
 import { ToastProvider } from "./ToastContext";
+import { UpdateNoticeProvider } from "../shared/contexts/UpdateNoticeContext";
 
 /**
  * 主應用程式組件
@@ -24,9 +25,11 @@ export default function App() {
     <GoogleOAuthWrapper>
       <AuthProvider>
         <ToastProvider>
-          <AppProvider>
-            <AppContent />
-          </AppProvider>
+          <UpdateNoticeProvider>
+            <AppProvider>
+              <AppContent />
+            </AppProvider>
+          </UpdateNoticeProvider>
         </ToastProvider>
       </AuthProvider>
     </GoogleOAuthWrapper>

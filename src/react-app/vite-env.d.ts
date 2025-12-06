@@ -10,6 +10,9 @@
 
 interface ImportMetaEnv {
   readonly VITE_GOOGLE_CLIENT_ID: string;
+  readonly VITE_AUTO_SYNC_DELAY: string;
+  readonly VITE_MIN_SYNC_INTERVAL: string;
+  readonly VITE_CHANGELOG_URL: string;
 }
 
 interface ImportMeta {

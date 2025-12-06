@@ -5,6 +5,7 @@
  * 統一匯出所有共用工具函數和服務
  */
 
+export * from './aiAdvice';
 export * from './defaults';
 export * from './googleSheets';
 export * from './parseInvoice';

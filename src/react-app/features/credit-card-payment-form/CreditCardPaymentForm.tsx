@@ -70,9 +70,10 @@ export const CreditCardPaymentForm: React.FC<CreditCardPaymentFormProps> = ({
       amount,
       date,
       note: '繳交卡費',
+      category: '轉帳',
     };
     addTransaction(newTransaction);
-    
+    showToast('卡費繳交成功', 'success');
     onClose();
   };
   

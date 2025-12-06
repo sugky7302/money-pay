@@ -8,11 +8,14 @@
  * 4. 計算平均月支出/收入
  * 5. 顯示淨收支狀況
  * 6. 支援自訂時間範圍
+ * 7. AI 收支建議
  */
 
-import { BarChart3, Calendar, TrendingDown, TrendingUp, PieChart, List, Tags as TagsIcon } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import { BarChart3, Calendar, TrendingDown, TrendingUp, PieChart, List, Tags as TagsIcon, Sparkles, RefreshCw } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { useAppContext } from '../../app/AppContext';
+import { getAiAdvice, AiAdviceRequest } from '../../shared/lib/aiAdvice';
 import { formatCurrency } from '../../shared/lib/utils';
 import { CategoryPieChart } from './ui/CategoryPieChart';
 
@@ -57,6 +60,11 @@ export const ReportsPage: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('month');
   const [categoryView, setCategoryView] = useState<CategoryView>('list');
   const [tagView, setTagView] = useState<TagView>('list');
+  
+  // AI 建議狀態
+  const [aiAdvice, setAiAdvice] = useState<string>('');
+  const [isLoadingAdvice, setIsLoadingAdvice] = useState(false);
+  const [adviceSource, setAdviceSource] = useState<'ai' | 'fallback' | 'error' | ''>('');
 
   const filteredTransactions = useMemo(() => {
     const creditCardAccountNames = accounts
@@ -247,6 +255,42 @@ export const ReportsPage: React.FC = () => {
   const netBalance = totalIncome - totalExpense;
   const avgMonthlyExpense = monthlyData.length > 0 ? totalExpense / monthlyData.length : 0;
   const avgMonthlyIncome = monthlyData.length > 0 ? totalIncome / monthlyData.length : 0;
+
+  // 期間標籤
+  const periodLabel = useMemo(() => {
+    if (selectedPeriod === '6months') return '近 6 個月';
+    if (selectedPeriod === '12months') return '近 12 個月';
+    return `${customStartMonth} ~ ${customEndMonth}`;
+  }, [selectedPeriod, customStartMonth, customEndMonth]);
+
+  /**
+   * 取得 AI 收支建議
+   */
+  const fetchAiAdvice = useCallback(async () => {
+    setIsLoadingAdvice(true);
+    setAiAdvice('');
+    setAdviceSource('');
+
+    const requestData: AiAdviceRequest = {
+      totalIncome,
+      totalExpense,
+      netBalance,
+      avgMonthlyExpense,
+      avgMonthlyIncome,
+      topCategories: topExpenseCategories,
+      monthlyTrend: monthlyData.map(m => ({
+        month: m.month,
+        income: m.income,
+        expense: m.expense,
+      })),
+      period: periodLabel,
+    };
+
+    const result = await getAiAdvice(requestData);
+    setAiAdvice(result.advice);
+    setAdviceSource(result.source);
+    setIsLoadingAdvice(false);
+  }, [totalIncome, totalExpense, netBalance, avgMonthlyExpense, avgMonthlyIncome, topExpenseCategories, monthlyData, periodLabel]);
   
   // Find max value for chart scaling
   const maxAmount = Math.max(1, ...monthlyData.map(m => Math.max(m.income, m.expense)));
@@ -546,6 +590,80 @@ export const ReportsPage: React.FC = () => {
               )}
               {tagView === 'pie' && <CategoryPieChart data={topExpenseTags} />}
             </>
+          )}
+        </div>
+      </section>
+
+      {/* AI 收支建議 */}
+      <section className="mt-6">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2">
+            <Sparkles size={20} className="text-purple-600" />
+            <h2 className="text-lg font-bold text-gray-800">AI 收支建議</h2>
+          </div>
+          <button
+            onClick={fetchAiAdvice}
+            disabled={isLoadingAdvice || transactions.length === 0}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              isLoadingAdvice || transactions.length === 0
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-purple-500 text-white hover:bg-purple-600'
+            }`}
+          >
+            {isLoadingAdvice ? (
+              <>
+                <RefreshCw size={14} className="animate-spin" />
+                分析中...
+              </>
+            ) : (
+              <>
+                <Sparkles size={14} />
+                取得建議
+              </>
+            )}
+          </button>
+        </div>
+
+        <div className="bg-linear-to-br from-purple-50 to-indigo-50 p-4 sm:p-5 rounded-2xl shadow-sm border border-purple-100">
+          {!aiAdvice && !isLoadingAdvice && (
+            <div className="text-center py-6">
+              <Sparkles size={32} className="mx-auto text-purple-300 mb-3" />
+              <p className="text-gray-500 text-sm">
+                {transactions.length === 0 
+                  ? '尚無交易資料，請先新增交易記錄'
+                  : '點擊「取得建議」讓 AI 分析您的收支狀況'}
+              </p>
+            </div>
+          )}
+
+          {isLoadingAdvice && (
+            <div className="text-center py-8">
+              <div className="inline-flex items-center gap-2 text-purple-600">
+                <RefreshCw size={20} className="animate-spin" />
+                <span className="text-sm font-medium">AI 正在分析您的收支資料...</span>
+              </div>
+            </div>
+          )}
+
+          {aiAdvice && !isLoadingAdvice && (
+            <div className="space-y-3">
+              {adviceSource === 'ai' && (
+                <div className="flex items-center gap-1.5 text-xs text-purple-600 mb-2">
+                  <Sparkles size={12} />
+                  <span>由 AI 生成</span>
+                </div>
+              )}
+              <div className="prose prose-sm max-w-none text-gray-700 prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-headings:text-gray-800 prose-strong:text-purple-700">
+                <ReactMarkdown>
+                  {aiAdvice}
+                </ReactMarkdown>
+              </div>
+              {adviceSource === 'fallback' && (
+                <p className="text-xs text-gray-400 mt-3 pt-3 border-t border-purple-100">
+                  * 此為系統預設建議，完整 AI 分析功能需要設定 Cloudflare Workers AI
+                </p>
+              )}
+            </div>
           )}
         </div>
       </section>

@@ -11,7 +11,7 @@
  * 7. 登出功能
  */
 
-import { AlertCircle, Cloud, Download, FolderPlus, LogOut, Plus, RefreshCw, Store, Tag, Upload, User, Zap, DollarSign } from 'lucide-react';
+import { AlertCircle, Cloud, Download, FolderPlus, LogOut, Plus, RefreshCw, Store, Tag, Upload, User, Zap, DollarSign, Megaphone } from 'lucide-react';
 import React, { useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
 import { useAuth } from '../../app/AuthContext';
@@ -19,6 +19,7 @@ import { CategoryForm } from '../../features/category-form/CategoryForm';
 import { CurrencyForm } from '../../features/currency-form/CurrencyForm';
 import { MerchantForm } from '../../features/merchant-form/MerchantForm';
 import { TagForm } from '../../features/tag-form/TagForm';
+import { useUpdateNotice } from '../../shared/contexts/UpdateNoticeContext';
 import { useUIStore } from '../../shared/stores/useUIStore';
 
 export const SettingsPage: React.FC = () => {
@@ -29,6 +30,7 @@ export const SettingsPage: React.FC = () => {
   const [showTagModal, setShowTagModal] = useState(false);
   const [showMerchantModal, setShowMerchantModal] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const { openUpdateModal, latestVersion } = useUpdateNotice();
   
   const handleSyncToCloud = async () => {
     await syncToCloud();
@@ -280,6 +282,23 @@ export const SettingsPage: React.FC = () => {
                 <div className="w-5 h-5 rounded-full bg-orange-500" />
               </div>
             </div>
+            <button
+              onClick={openUpdateModal}
+              className="w-full p-4 flex items-center justify-between border-t border-gray-50 hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-50 p-2 rounded-lg text-blue-600">
+                  <Megaphone size={20} />
+                </div>
+                <div className="text-left">
+                  <h4 className="font-medium text-gray-800">顯示更新內容</h4>
+                  <p className="text-xs text-gray-500">查看最近版本的更新日誌</p>
+                </div>
+              </div>
+              <span className="text-xs text-gray-400">
+                {latestVersion || '—'}
+              </span>
+            </button>
           </div>
         </section>
         
@@ -294,7 +313,7 @@ export const SettingsPage: React.FC = () => {
       </div>
 
       <div className="mt-8 text-center">
-        <p className="text-xs text-gray-300">CloudBudget v2.0.0</p>
+        <p className="text-xs text-gray-300">CloudBudget</p>
       </div>
       
       <CategoryForm 

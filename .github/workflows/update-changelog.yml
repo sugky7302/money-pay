@@ -1,0 +1,38 @@
+name: Update changelog (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      note:
+        description: "Optional note for manual changelog run"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Generate changelog from git history
+        run: npm run update:changelog
+      - name: Commit changes
+        run: |
+          if git diff --quiet; then
+            echo "No changelog changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/react-app/shared/constants/appVersion.ts
+          git commit -m "chore: update app version from git history"
+          git push

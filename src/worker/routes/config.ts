@@ -10,6 +10,8 @@ const config = new Hono<{ Bindings: Env }>();
 config.get("/", (c) => {
     return c.json({
         googleClientId: c.env.GOOGLE_CLIENT_ID,
+        autoSyncDelay: c.env.AUTO_SYNC_DELAY,
+        minSyncInterval: c.env.MIN_SYNC_INTERVAL,
     });
 });
 

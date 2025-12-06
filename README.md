@@ -8,6 +8,7 @@
 - ☁️ **雲端同步** - 資料自動同步到 Google Sheets
 - 📱 **手機友善** - 響應式設計，觸控優化
 - 📊 **收支報表** - 視覺化的財務分析
+- 🤖 **AI 收支建議** - 使用 Cloudflare Workers AI 提供個人化理財建議
 - 🧾 **發票掃描** - 支援台灣電子發票 QR Code
 - 💳 **多帳戶管理** - 銀行、現金、電子支付、信用卡
 - 🏷️ **分類與標籤** - 靈活的交易分類系統
@@ -17,6 +18,7 @@
 
 - **前端**: React 19 + TypeScript + Vite + Tailwind CSS v4
 - **後端**: Cloudflare Workers + Hono
+- **AI**: Cloudflare Workers AI (Llama 3.1)
 - **認證**: Google OAuth 2.0 (redirect flow)
 - **儲存**: localStorage + Google Sheets API
 - **掃描**: @yudiel/react-qr-scanner
@@ -32,7 +34,7 @@
 | `LoginPage.tsx` | 登入頁面 - Google OAuth 登入流程 (redirect flow) |
 | `HomePage.tsx` | 首頁 - 餘額卡片、交易列表、快速新增 |
 | `AccountsPage.tsx` | 帳戶頁面 - 帳戶列表、新增/編輯/刪除帳戶 |
-| `ReportsPage.tsx` | 報表頁面 - 收支統計、分類圓餅圖、趨勢圖表 |
+| `ReportsPage.tsx` | 報表頁面 - 收支統計、分類圓餅圖、趨勢圖表、AI 建議 |
 | `SettingsPage.tsx` | 設定頁面 - 雲端同步、資料管理、登出 |
 
 ### 功能組件 (features/)
@@ -82,6 +84,7 @@
 | `parseInvoice.ts` | 發票解析 - 解析台灣電子發票 QR Code |
 | `googleSheets.ts` | Google Sheets API - 雲端資料同步 |
 | `useConfig.ts` | 設定 Hook - 載入環境變數或 API 設定 |
+| `aiAdvice.ts` | AI 建議服務 - 呼叫後端 AI API |
 | `defaults.ts` | 預設資料 - 初始化用的空陣列 |
 
 ### 狀態管理
@@ -105,6 +108,7 @@
 |------|------|
 | `index.ts` | Worker 入口 - CORS、安全標頭、路由 |
 | `routes/config.ts` | Config API - 提供前端設定 (Google Client ID) |
+| `routes/ai-advice.ts` | AI Advice API - 使用 Workers AI 生成收支建議 |
 
 ---
 

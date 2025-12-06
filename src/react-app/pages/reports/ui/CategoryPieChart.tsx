@@ -9,6 +9,7 @@ interface CategoryData {
   category: string;
   amount: number;
   percentage?: number;
+  [x: string]: any;
 }
 
 interface CategoryPieChartProps {
@@ -38,6 +39,7 @@ export const CategoryPieChart: React.FC<CategoryPieChartProps> = ({ data }) => {
           dataKey="amount"
           nameKey="category"
           label={({ cx, cy, midAngle, innerRadius, outerRadius, payload }) => {
+            if (midAngle === undefined || innerRadius === undefined || outerRadius === undefined || cx === undefined || cy === undefined) return null;
             const radius = innerRadius + (outerRadius - innerRadius) * 0.55;
             const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
             const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
@@ -49,7 +51,7 @@ export const CategoryPieChart: React.FC<CategoryPieChartProps> = ({ data }) => {
             );
           }}
         >
-          {data.map((entry, index) => (
+          {data.map((_, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Pie>

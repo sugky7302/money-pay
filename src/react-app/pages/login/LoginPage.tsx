@@ -95,9 +95,6 @@ export const LoginPage: React.FC = () => {
       showToast("Google 登入失敗，請稍後再試。", 'error');
     },
     scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets',
-    flow: 'implicit',
-    ux_mode: 'redirect',
-    redirect_uri: window.location.origin,
   });
 
   return (

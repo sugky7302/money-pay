@@ -5,10 +5,12 @@
  * 1. 設定 CORS 中介軟體
  * 2. 設定安全標頭（Cross-Origin-Opener-Policy）
  * 3. 路由 /api/config 提供前端設定
+ * 4. 路由 /api/ai-advice 提供 AI 收支建議
  */
 
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import aiAdviceRoute from "./routes/ai-advice";
 import configRoute from "./routes/config";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -25,5 +27,6 @@ app.use("*", async (c, next) => {
 app.get("/api/", (c) => c.json({ name: "Cloudflare" }));
 
 app.route("/api/config", configRoute);
+app.route("/api/ai-advice", aiAdviceRoute);
 
 export default app;
