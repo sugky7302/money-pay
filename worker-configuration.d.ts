@@ -9,6 +9,7 @@ declare namespace Cloudflare {
         GOOGLE_CLIENT_ID: string;
         AUTO_SYNC_DELAY: string;
         MIN_SYNC_INTERVAL: string;
+        MODEL_NAME: string;
     }
 }
 interface Env extends Cloudflare.Env { }

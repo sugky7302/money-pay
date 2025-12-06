@@ -10,6 +10,10 @@
 import { Hono } from "hono";
 
 const aiAdvice = new Hono<{ Bindings: Env }>();
+/** 從環境變數取得 AI 模型名稱，預設為 Llama 3.1-8b-instruct */
+function getModelName(env: Env): string {
+  return env.MODEL_NAME || '@cf/meta/llama-3.1-8b-instruct';
+}
 
 /** 請求資料介面 */
 interface AdviceRequest {
@@ -83,8 +87,8 @@ aiAdvice.post("/", async (c) => {
 
     // 使用 Cloudflare Workers AI
     const prompt = buildPrompt(data);
-    
-    const response = await ai.run('@cf/meta/llama-3.1-8b-instruct', {
+    const modelName = getModelName(c.env as Env);
+    const response = await ai.run(modelName, {
       messages: [
         { role: 'system', content: '你是一位專業的個人理財顧問，專門提供繁體中文的財務建議。' },
         { role: 'user', content: prompt },
