@@ -89,10 +89,7 @@ aiAdvice.post("/", async (c) => {
     const prompt = buildPrompt(data);
     const modelName = getModelName(c.env as Env);
     const response = await ai.run(modelName, {
-      messages: [
-        { role: 'system', content: '你是一位專業的個人理財顧問，專門提供繁體中文的財務建議。' },
-        { role: 'user', content: prompt },
-      ],
+      input: `你是一位專業的個人理財顧問，專門提供繁體中文的財務建議。\n\n${prompt}`,
       max_tokens: 500,
     });
 
