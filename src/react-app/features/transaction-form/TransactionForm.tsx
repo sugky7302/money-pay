@@ -20,7 +20,6 @@ import { Input } from '../../shared/ui/Input';
 import { InputSelect } from '../../shared/ui/InputSelect';
 import { InvoiceScanModal } from '../../shared/ui/InvoiceScanModal';
 import { Modal } from '../../shared/ui/Modal';
-import { Select } from '../../shared/ui/Select';
 
 interface TransactionFormProps {
   isOpen: boolean;
@@ -258,11 +257,12 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         </div>
 
         {accountOptions.length > 0 && (
-          <Select
+          <InputSelect
             label="帳戶"
             options={accountOptions}
             value={formData.account}
-            onChange={(e) => setFormData({...formData, account: e.target.value})}
+            onChange={(value) => setFormData({...formData, account: value as string})}
+            placeholder="搜尋或選擇帳戶"
           />
         )}
 

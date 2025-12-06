@@ -236,12 +236,12 @@ export const InputSelect: React.FC<InputSelectProps> = ({
 
       {/* 手機版底部彈出選單 */}
       {showMobileModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 z-[60] flex items-end justify-center">
           <div 
             className="absolute inset-0 bg-black/40 backdrop-blur-sm" 
             onClick={() => setShowMobileModal(false)} 
           />
-          <div className="bg-white w-full rounded-t-3xl relative z-10 shadow-2xl max-h-[70vh] flex flex-col animate-in slide-in-from-bottom duration-200">
+          <div className="bg-white w-full rounded-t-3xl relative z-10 shadow-2xl max-h-[80vh] flex flex-col animate-in slide-in-from-bottom duration-200 pb-safe">
             {/* 拖曳條 */}
             <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto my-3 shrink-0" />
             
@@ -266,7 +266,7 @@ export const InputSelect: React.FC<InputSelectProps> = ({
                   value={mobileSearchValue}
                   onChange={(e) => setMobileSearchValue(e.target.value)}
                   placeholder="搜尋或輸入新項目..."
-                  className="flex-1 bg-transparent outline-none text-gray-800 placeholder-gray-400"
+                  className="flex-1 bg-transparent outline-none text-gray-800 placeholder-gray-400 focus-visible:outline-none!"
                 />
                 {mobileSearchValue && (
                   <button onClick={() => setMobileSearchValue('')}>
