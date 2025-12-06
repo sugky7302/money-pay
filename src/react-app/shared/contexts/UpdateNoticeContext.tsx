@@ -1,6 +1,5 @@
 import React, { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { Modal } from '../ui/Modal';
-import { useConfig } from '../lib/useConfig';
 
 interface UpdateNoticeContextValue {
   openUpdateModal: () => void;
@@ -15,6 +14,8 @@ const UpdateNoticeContext = createContext<UpdateNoticeContextValue | undefined>(
 
 type ParsedChangelog = {
   version: string;
+  date?: string;
+  dateDisplay?: string;
   sections: {
     Added?: string[];
     Changed?: string[];
@@ -38,7 +39,20 @@ function parseChangelog(text: string): ParsedChangelog[] {
     const line = raw.trim();
     if (line.startsWith('## ')) {
       flush();
-      current = { version: line.replace(/^##\s+/, ''), sections: {} };
+      const heading = line.replace(/^##\s+/, '');
+      let version = heading;
+      let date: string | undefined;
+      const match = heading.match(/^\[?(.+?)\]?\s*-\s*(.+)$/);
+      if (match) {
+        version = match[1].trim();
+        date = match[2].trim();
+      }
+      current = {
+        version,
+        date,
+        dateDisplay: date ? date.replace(/-/g, '/') : undefined,
+        sections: {},
+      };
       currentSection = null;
     } else if (line.startsWith('### ')) {
       if (!current) return;
@@ -56,12 +70,11 @@ function parseChangelog(text: string): ParsedChangelog[] {
 }
 
 export const UpdateNoticeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { config } = useConfig();
   const [isOpen, setIsOpen] = useState(false);
   const [parsedLog, setParsedLog] = useState<ParsedChangelog[]>([]);
 
-  const version = useMemo(() => 'dev', []);
-  const latestVersion = parsedLog[0]?.version || version;
+  const latestVersion = useMemo(() => parsedLog[0]?.version, [parsedLog]);
+  const version = latestVersion; // Only trigger after changelog loaded
 
   // 從外部來源載入 CHANGELOG（預設 /CHANGELOG.md，可用 VITE_CHANGELOG_URL 覆寫）
   useEffect(() => {
@@ -79,7 +92,7 @@ export const UpdateNoticeProvider: React.FC<{ children: ReactNode }> = ({ childr
   }, []);
 
   useEffect(() => {
-    if (!version) return;
+    if (!version) return; // 尚未載入版本時不彈窗
     try {
       const seen = localStorage.getItem(STORAGE_KEY);
       if (seen !== version) {
@@ -111,9 +124,14 @@ export const UpdateNoticeProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
 
   return (
-    <UpdateNoticeContext.Provider value={{ openUpdateModal, closeUpdateModal, version: latestVersion, latestVersion }}>
+    <UpdateNoticeContext.Provider value={{ openUpdateModal, closeUpdateModal, version: latestVersion || 'dev', latestVersion }}>
       {children}
       <Modal isOpen={isOpen} onClose={closeUpdateModal} title={parsedLog[0] ? `更新日誌 v${parsedLog[0].version}` : '更新日誌'}>
+        {parsedLog[0]?.dateDisplay && (
+          <div className="text-[14px] text-gray-400 -mt-6">
+            {parsedLog[0].dateDisplay}
+          </div>
+        )}
         <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
           {parsedLog.map((entry) => (
             <div key={entry.version} className="bg-gray-50 border border-gray-100 rounded-xl p-3">
