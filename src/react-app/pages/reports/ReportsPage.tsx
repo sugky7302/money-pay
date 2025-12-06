@@ -22,19 +22,70 @@ type SortOption = 'month' | 'income' | 'expense' | 'balance';
 
 export const ReportsPage: React.FC = () => {
   const { transactions } = useAppContext();
-  const [selectedPeriod, setSelectedPeriod] = useState<'6months' | '12months'>('6months');
+  const [selectedPeriod, setSelectedPeriod] = useState<'6months' | '12months' | 'custom'>('6months');
+  const [customStartMonth, setCustomStartMonth] = useState<string>(() => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - 5);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const [customEndMonth, setCustomEndMonth] = useState<string>(() => {
+    const date = new Date();
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  });
   const [sortBy, setSortBy] = useState<SortOption>('month');
+
+  const parsedMonthRange = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const parseMonthString = (value: string) => {
+      const [y, m] = value.split('-').map(Number);
+      if (!y || !m) return undefined;
+      return new Date(y, m - 1, 1);
+    };
+
+    let rangeStart = new Date(start);
+    let rangeEnd = new Date(end);
+
+    if (selectedPeriod === '6months') {
+      rangeStart.setMonth(rangeStart.getMonth() - 5);
+    } else if (selectedPeriod === '12months') {
+      rangeStart.setMonth(rangeStart.getMonth() - 11);
+    } else {
+      const parsedStart = parseMonthString(customStartMonth);
+      const parsedEnd = parseMonthString(customEndMonth);
+
+      if (parsedStart) rangeStart = parsedStart;
+      if (parsedEnd) rangeEnd = parsedEnd;
+      if (rangeEnd < rangeStart) {
+        rangeEnd = new Date(rangeStart);
+      }
+    }
+
+    const monthRange: Date[] = [];
+    const cursor = new Date(rangeStart);
+    while (cursor <= rangeEnd) {
+      monthRange.push(new Date(cursor));
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+
+    const toMonthKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+    return {
+      startKey: toMonthKey(rangeStart),
+      endKey: toMonthKey(rangeEnd),
+      monthRange,
+    };
+  }, [selectedPeriod, customStartMonth, customEndMonth]);
   
   // Calculate monthly data for trends
   const monthlyData = useMemo((): MonthlyData[] => {
-    const months = selectedPeriod === '6months' ? 6 : 12;
     const data: { [key: string]: MonthlyData } = {};
     
-    // Initialize last N months
-    const now = new Date();
-    for (let i = months - 1; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthKey = date.toISOString().slice(0, 7);
+    // Initialize months within range (use local month key to avoid timezone shift)
+    parsedMonthRange.monthRange.forEach(date => {
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       const monthLabel = date.toLocaleDateString('zh-TW', { year: 'numeric', month: 'short' });
       data[monthKey] = {
         month: monthLabel,
@@ -42,12 +93,12 @@ export const ReportsPage: React.FC = () => {
         expense: 0,
         balance: 0,
       };
-    }
+    });
     
-    // Aggregate transactions by month
+    // Aggregate transactions by month within range
     transactions.forEach(t => {
       const monthKey = t.date.slice(0, 7);
-      if (data[monthKey]) {
+      if (monthKey >= parsedMonthRange.startKey && monthKey <= parsedMonthRange.endKey && data[monthKey]) {
         if (t.type === 'income') {
           data[monthKey].income += t.amount;
         } else if (t.type === 'expense') {
@@ -76,7 +127,7 @@ export const ReportsPage: React.FC = () => {
         // Already in chronological order
         return result;
     }
-  }, [transactions, selectedPeriod, sortBy]);
+  }, [transactions, parsedMonthRange, sortBy]);
   
   // Calculate top expense categories for the selected period
   const topExpenseCategories = useMemo((): CategoryData[] => {
@@ -84,13 +135,13 @@ export const ReportsPage: React.FC = () => {
     let totalExpense = 0;
     
     // Filter transactions by selected period
-    const months = selectedPeriod === '6months' ? 6 : 12;
-    const cutoffDate = new Date();
-    cutoffDate.setMonth(cutoffDate.getMonth() - months);
-    const cutoffStr = cutoffDate.toISOString().slice(0, 7);
-    
     transactions.forEach(t => {
-      if (t.type === 'expense' && t.date.slice(0, 7) >= cutoffStr) {
+      const monthKey = t.date.slice(0, 7);
+      if (
+        t.type === 'expense' &&
+        monthKey >= parsedMonthRange.startKey &&
+        monthKey <= parsedMonthRange.endKey
+      ) {
         categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
         totalExpense += t.amount;
       }
@@ -106,7 +157,7 @@ export const ReportsPage: React.FC = () => {
       .slice(0, 5);
     
     return categories;
-  }, [transactions, selectedPeriod]);
+  }, [transactions, parsedMonthRange]);
   
   // Calculate overall stats
   const totalIncome = monthlyData.reduce((sum, m) => sum + m.income, 0);
@@ -126,10 +177,10 @@ export const ReportsPage: React.FC = () => {
       </header>
       
       {/* Period Selector */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-3">
         <button
           onClick={() => setSelectedPeriod('6months')}
-          className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
+          className={`flex-1 min-w-[120px] py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
             selectedPeriod === '6months'
               ? 'bg-blue-500 text-white'
               : 'bg-white text-gray-600 border border-gray-200'
@@ -139,7 +190,7 @@ export const ReportsPage: React.FC = () => {
         </button>
         <button
           onClick={() => setSelectedPeriod('12months')}
-          className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
+          className={`flex-1 min-w-[120px] py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
             selectedPeriod === '12months'
               ? 'bg-blue-500 text-white'
               : 'bg-white text-gray-600 border border-gray-200'
@@ -147,7 +198,39 @@ export const ReportsPage: React.FC = () => {
         >
           近 12 個月
         </button>
+        <button
+          onClick={() => setSelectedPeriod('custom')}
+          className={`flex-1 min-w-[120px] py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
+            selectedPeriod === 'custom'
+              ? 'bg-blue-500 text-white'
+              : 'bg-white text-gray-600 border border-gray-200'
+          }`}
+        >
+          自訂區間
+        </button>
       </div>
+      {selectedPeriod === 'custom' && (
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            起始月份
+            <input
+              type="month"
+              value={customStartMonth}
+              onChange={(e) => setCustomStartMonth(e.target.value)}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            結束月份
+            <input
+              type="month"
+              value={customEndMonth}
+              onChange={(e) => setCustomEndMonth(e.target.value)}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </label>
+        </div>
+      )}
       
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-3 mb-6">
