@@ -23,6 +23,7 @@ export const MainContent: React.FC = () => {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showTransferForm, setShowTransferForm] = useState(false);
+  const [startWithInvoiceScan, setStartWithInvoiceScan] = useState(false);
   const { isAnyModalOpen } = useUIStore();
 
   // Render active page
@@ -50,6 +51,12 @@ export const MainContent: React.FC = () => {
     setShowTransferForm(true);
   };
 
+  const handleSelectInvoiceScan = () => {
+    setShowAddMenu(false);
+    setStartWithInvoiceScan(true);
+    setShowTransactionForm(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans md:flex md:items-center md:justify-center md:bg-gray-200">
       <div className="w-full min-h-screen md:bg-gray-50 md:rounded-[40px] md:shadow-2xl md:overflow-hidden relative flex flex-col">
@@ -70,12 +77,17 @@ export const MainContent: React.FC = () => {
           onClose={() => setShowAddMenu(false)}
           onSelectTransaction={handleSelectTransaction}
           onSelectTransfer={handleSelectTransfer}
+          onSelectInvoiceScan={handleSelectInvoiceScan}
         />
 
         <TransactionForm
           isOpen={showTransactionForm}
-          onClose={() => setShowTransactionForm(false)}
+          onClose={() => {
+            setShowTransactionForm(false);
+            setStartWithInvoiceScan(false);
+          }}
           mode="add"
+          startWithInvoiceScan={startWithInvoiceScan}
         />
 
         <TransferForm

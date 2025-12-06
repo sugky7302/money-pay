@@ -2,11 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../../app/AppContext';
+import { ParsedInvoice } from '../../shared/lib/parseInvoice';
 import { generateId, getCurrentDate } from '../../shared/lib/utils';
-import { Transaction, Category, Merchant, Tag } from '../../shared/types';
+import { Category, Merchant, Tag, Transaction } from '../../shared/types';
 import { Button } from '../../shared/ui/Button';
 import { Input } from '../../shared/ui/Input';
 import { InputSelect } from '../../shared/ui/InputSelect';
+import { InvoiceScanModal } from '../../shared/ui/InvoiceScanModal';
 import { Modal } from '../../shared/ui/Modal';
 import { Select } from '../../shared/ui/Select';
 
@@ -15,13 +17,15 @@ interface TransactionFormProps {
   onClose: () => void;
   transaction?: Transaction;
   mode?: 'add' | 'edit';
+  startWithInvoiceScan?: boolean;
 }
 
 export const TransactionForm: React.FC<TransactionFormProps> = ({ 
   isOpen, 
   onClose, 
   transaction,
-  mode = 'add'
+  mode = 'add',
+  startWithInvoiceScan = false,
 }) => {
   const { categories, accounts, merchants, tags, addTransaction, updateTransaction, addCategory, addMerchant, addTag } = useAppContext();
   
@@ -35,6 +39,13 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     merchant: '',
     account: '',
   });
+  const [isScanOpen, setIsScanOpen] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && startWithInvoiceScan) {
+      setIsScanOpen(true);
+    }
+  }, [isOpen, startWithInvoiceScan]);
   
   useEffect(() => {
     const loadFormData = () => {
@@ -56,8 +67,10 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       }
     };
     
-    loadFormData();
-  }, [transaction, mode, categories, accounts]);
+    if (isOpen) {
+      loadFormData();
+    }
+  }, [transaction, mode, categories, accounts, isOpen]);
   
   const handleTypeChange = (type: 'expense' | 'income') => {
     const filteredCategories = categories.filter(c => c.type === type);
@@ -133,8 +146,40 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   const merchantOptions = merchants.map(m => ({ value: m.name, label: m.name }));
   const tagOptions = tags.map(t => ({ value: t.name, label: t.name }));
 
+  const handleInvoiceParsed = (data: ParsedInvoice) => {
+    setFormData((prev) => {
+      const mergedNote = data.note ? [data.note, prev.note].filter(Boolean).join(' | ') : prev.note;
+      const nextTags = new Set(prev.tags || []);
+      nextTags.add('發票');
+
+      let merchantName = prev.merchant;
+      if (data.sellerId) {
+        const foundMerchant = merchants.find(m => m.id === data.sellerId);
+        if (foundMerchant) {
+          merchantName = foundMerchant.name;
+        }
+      }
+
+      return {
+        ...prev,
+        type: 'expense',
+        amount: data.amount ?? prev.amount,
+        date: data.date ?? prev.date,
+        merchant: merchantName,
+        note: mergedNote,
+        tags: Array.from(nextTags),
+      };
+    });
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={mode === 'add' ? '新增交易' : '編輯交易'}>
+      <InvoiceScanModal
+        isOpen={isScanOpen}
+        onClose={() => setIsScanOpen(false)}
+        onParsed={handleInvoiceParsed}
+      />
+
       <div className="flex bg-gray-200 rounded-lg p-1 mb-6">
         <button 
           className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${
@@ -152,6 +197,17 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         >
           收入
         </button>
+      </div>
+
+      <div className="mb-4">
+        <Button
+          type="button"
+          variant="secondary"
+          className="w-full py-3 border border-dashed border-gray-300 bg-white text-sm font-medium text-gray-700"
+          onClick={() => setIsScanOpen(true)}
+        >
+          掃描電子發票填入
+        </Button>
       </div>
 
       <div className="space-y-4">
